@@ -1,0 +1,26 @@
+{
+  "name": "Gestion École Ousmane Sidibé",
+  "short_name": "Gestion Sidibé",
+  "description": "Application de gestion pour l'École Privée Ousmane Sidibé — élèves, notes, présence, bulletins, paiements",
+  "start_url": "/gestion_ecole_sidibe.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f6f8f7",
+  "theme_color": "#17518f",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#17518f">
+<title>Espace Parent — École Ousmane Sidibé</title>
+<style>
+  :root{ --blue:#17518f; --gold:#c8901a; --green:#1e8e3e; --red:#d33; --muted:#6b7280; --border:#e2e5ea; --bg:#f6f8f7; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:#1a1a1a}
+  .header{background:var(--blue);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+  .header h1{font-size:16px;margin:0}
+  .header p{font-size:11.5px;margin:2px 0 0;opacity:.85}
+  .header button{background:rgba(255,255,255,.15);color:#fff;border:none;padding:7px 12px;border-radius:6px;font-size:12px;cursor:pointer}
+  .wrap{max-width:520px;margin:0 auto;padding:16px}
+  .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .login-box{background:#fff;border-radius:12px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+  .login-box h2{margin:0 0 4px;font-size:17px;color:var(--blue);text-align:center}
+  .login-box p{margin:0 0 18px;font-size:12.5px;color:var(--muted);text-align:center}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600}
+  input,select{width:100%;padding:10px 11px;border-radius:7px;border:1px solid var(--border);font-size:14px;margin-bottom:12px;font-family:inherit}
+  .login-box button, .btn-full{width:100%;padding:12px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+  .err{color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;text-align:center}
+  .form-box{background:#fff;border-radius:10px;padding:16px;margin-bottom:14px;border:1px solid var(--border)}
+  .sec-title{font-weight:700;font-size:14px;color:var(--blue);margin-bottom:10px}
+  .stat-card{background:#f6f8fa;border-radius:8px;padding:12px;margin-bottom:8px}
+  .stat-card .label{font-size:11.5px;color:var(--muted);margin-bottom:3px}
+  .stat-card .value{font-size:18px;font-weight:700}
+  .item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .item:last-child{border-bottom:none}
+  .badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:600}
+  .badge.absence{background:#fde8e8;color:var(--red)}
+  .badge.retard{background:#fff3d6;color:var(--gold)}
+  .badge.justifie{background:#e5f6ea;color:var(--green)}
+  .empty{text-align:center;color:var(--muted);font-size:13px;padding:14px 0}
+  .hidden{display:none !important}
+  .eleve-nom{font-weight:700;font-size:16px}
+  .eleve-sub{font-size:12px;color:var(--muted);margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{padding:6px 4px;text-align:left;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-size:11px;font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- ÉCRAN DE VÉRIFICATION -->
+<div class="login-screen" id="ecran-verif">
+  <div class="login-box">
+    <h2>👨‍👩‍👧 Espace Parent</h2>
+    <p>École Privée Ousmane Sidibé<br>Renseignez les informations de votre enfant pour consulter son suivi</p>
+    <div class="err" id="verif-err">Aucun élève trouvé avec ces informations. Vérifiez l'orthographe ou contactez l'école.</div>
+    <label>N° Matricule</label>
+    <input type="text" id="v-matricule" placeholder="Ex: 1315">
+    <label>Nom</label>
+    <input type="text" id="v-nom" placeholder="Ex: Sidibé">
+    <label>Prénom</label>
+    <input type="text" id="v-prenom" placeholder="Ex: Aminata">
+    <label>Classe</label>
+    <select id="v-classe"></select>
+    <button onclick="verifierEleve()">Voir le suivi de mon enfant</button>
+  </div>
+</div>
+
+<!-- PAGE RÉSULTAT -->
+<div id="app" class="hidden">
+  <div class="header">
+    <div>
+      <h1 id="titre-eleve">École Ousmane Sidibé</h1>
+      <p id="sous-titre-eleve">Espace parent</p>
+    </div>
+    <button onclick="retourVerif()">🔓 Changer d'élève</button>
+  </div>
+
+  <div class="wrap">
+    <div class="form-box">
+      <div class="sec-title">💰 Situation financière</div>
+      <div class="stat-card"><div class="label">Scolarité totale</div><div class="value" id="fin-total">—</div></div>
+      <div class="stat-card"><div class="label">Montant payé</div><div class="value" id="fin-paye" style="color:var(--green)">—</div></div>
+      <div class="stat-card"><div class="label">Reste à payer</div><div class="value" id="fin-reste" style="color:var(--red)">—</div></div>
+      <div id="fin-historique"></div>
+    </div>
+
+    <div class="form-box">
+      <div class="sec-title">📋 Présences récentes</div>
+      <div id="presence-liste"></div>
+    </div>
+
+    <div class="form-box">
+      <div class="sec-title">📝 Notes</div>
+      <div id="notes-contenu"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD3mfTWWngbrXc4FyE8MNJvYF7YTEQ29EU",
+  authDomain: "gestion-ecole-ousmane-sidibe.firebaseapp.com",
+  projectId: "gestion-ecole-ousmane-sidibe",
+  storageBucket: "gestion-ecole-ousmane-sidibe.firebasestorage.app",
+  messagingSenderId: "311153375215",
+  appId: "1:311153375215:web:363ff448118e2fdd8ca81a"
+};
+const app = initializeApp(firebaseConfig);
+const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() }) });
+const ECOLE_ID = "ecole-ousmane-sidibe";
+
+async function charger(cle, defaut){
+  try{
+    const ref = doc(db, "ecoles", ECOLE_ID, "data", cle);
+    const snap = await getDoc(ref);
+    return snap.exists() ? snap.data().valeur : defaut;
+  }catch(e){ console.error(e); return defaut; }
+}
+
+const nomNiveaux = {
+  petit:'Petite section',moyen:'Moyenne section',grand:'Grande section',
+  '1ere':'1ère année','2eme':'2ème année','3eme':'3ème année',
+  '4eme':'4ème année','5eme':'5ème année','6eme':'6ème année',
+  '7eme':'7ème année','8eme':'8ème année','9eme':'9ème année (DEF)',
+  '10eme':'10ème année (CG)','11sci':'11ème Sciences','11let':'11ème Lettres','11ses':'11ème SES',
+  tsexp:'Terminale TSExp',tse:'Terminale TSE',tseco:'Terminale TSeco',tss:'Terminale TSS',tll:'Terminale TLL',tall:'Terminale TALL'
+};
+const niveaux = {
+  m: ['petit','moyen','grand'],
+  p: ['1ere','2eme','3eme','4eme','5eme','6eme'],
+  s: ['7eme','8eme','9eme'],
+  l: ['10eme','11sci','11let','11ses','tsexp','tse','tseco','tss','tll','tall']
+};
+const tousNiveaux = [...niveaux.m, ...niveaux.p, ...niveaux.s, ...niveaux.l];
+
+let eleves = [], presences = [], notes = [], compositions = [];
+
+function peuplerSelectClasse(){
+  const sel = document.getElementById('v-classe');
+  sel.innerHTML = '<option value="">— Sélectionner —</option>' + tousNiveaux.map(n=>`<option value="${n}">${nomNiveaux[n]}</option>`).join('');
+}
+peuplerSelectClasse();
+
+async function chargerToutesLesDonnees(){
+  eleves = await charger('eleves', []);
+  presences = await charger('presences', []);
+  notes = await charger('notes', []);
+  compositions = await charger('compositions', []);
+}
+// Chargement anticipé dès l'ouverture de la page pour une vérification rapide
+const chargementInitial = chargerToutesLesDonnees();
+
+window.verifierEleve = async function(){
+  const matricule = document.getElementById('v-matricule').value.trim();
+  const nom = document.getElementById('v-nom').value.trim().toLowerCase();
+  const prenom = document.getElementById('v-prenom').value.trim().toLowerCase();
+  const classe = document.getElementById('v-classe').value;
+  const err = document.getElementById('verif-err');
+
+  if(!matricule || !nom || !prenom || !classe){
+    err.textContent = "Veuillez remplir tous les champs.";
+    err.style.display = 'block';
+    return;
+  }
+
+  await chargementInitial; // s'assure que les données sont bien chargées
+
+  const eleve = eleves.find(e =>
+    (e.matricule||'').trim() === matricule &&
+    (e.nom||'').trim().toLowerCase() === nom &&
+    (e.prenom||'').trim().toLowerCase() === prenom &&
+    e.niveau === classe
+  );
+
+  if(!eleve){
+    err.textContent = "Aucun élève trouvé avec ces informations. Vérifiez l'orthographe ou contactez l'école.";
+    err.style.display = 'block';
+    return;
+  }
+
+  err.style.display = 'none';
+  sessionStorage.setItem('eleve_verifie_id', eleve.id);
+  afficherEspaceEleve(eleve);
+};
+
+function afficherEspaceEleve(e){
+  document.getElementById('ecran-verif').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('titre-eleve').textContent = `${e.prenom} ${e.nom}`;
+  document.getElementById('sous-titre-eleve').textContent = `${nomNiveaux[e.niveau]||e.niveau} — Matricule ${e.matricule||'—'}`;
+
+  // Situation financière
+  const reste = Math.max(0, e.tarif - e.paye);
+  document.getElementById('fin-total').textContent = (e.tarif||0).toLocaleString()+' FCFA';
+  document.getElementById('fin-paye').textContent = (e.paye||0).toLocaleString()+' FCFA';
+  document.getElementById('fin-reste').textContent = reste.toLocaleString()+' FCFA';
+  const histo = (e.historique||[]).slice().reverse();
+  const contHisto = document.getElementById('fin-historique');
+  if(!histo.length){
+    contHisto.innerHTML = '<div class="empty">Aucun paiement enregistré pour le moment.</div>';
+  } else {
+    contHisto.innerHTML = '<div class="sec-title" style="font-size:12.5px;margin-top:10px">Historique des paiements</div>' +
+      histo.map(h=>`<div class="item"><span>${h.date}</span><span style="color:var(--green);font-weight:600">+${h.montant.toLocaleString()} FCFA</span></div>`).join('');
+  }
+
+  // Présences
+  const presencesEleve = presences.filter(p=>p.eleveId===e.id).sort((a,b)=>b.id-a.id).slice(0,20);
+  const contPresence = document.getElementById('presence-liste');
+  if(!presencesEleve.length){
+    contPresence.innerHTML = '<div class="empty">🎉 Aucune absence ni retard enregistré.</div>';
+  } else {
+    contPresence.innerHTML = presencesEleve.map(p=>`
+      <div class="item">
+        <div>${p.date}<br><span style="font-size:11px;color:var(--muted)">${p.matiere}${p.remarque?' — '+p.remarque:''}</span></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="badge ${p.type}">${p.type==='absence'?'Absence':'Retard'}</span>
+          ${p.justifie==='oui'?'<span class="badge justifie">Justifié</span>':''}
+        </div>
+      </div>`).join('');
+  }
+
+  // Notes
+  const notesEleve = notes.filter(n=>n.eleveId===e.id);
+  const compositionsEleve = compositions.filter(c=>c.eleveId===e.id);
+  const contNotes = document.getElementById('notes-contenu');
+  if(!notesEleve.length && !compositionsEleve.length){
+    contNotes.innerHTML = '<div class="empty">Aucune note enregistrée pour le moment.</div>';
+  } else {
+    const cles = [...new Set([...notesEleve.map(n=>n.trimestre+'|'+n.matiere), ...compositionsEleve.map(c=>c.trimestre+'|'+c.matiere)])];
+    cles.sort((a,b)=>a.localeCompare(b));
+    let html = `<table><thead><tr><th>Trim.</th><th>Matière</th><th>Devoirs /20</th><th>Composition /40</th></tr></thead><tbody>`;
+    cles.forEach(cle=>{
+      const [trimestre, matiere] = cle.split('|');
+      const devoirs = notesEleve.filter(n=>n.trimestre===trimestre && n.matiere===matiere);
+      const moyDevoirs = devoirs.length ? (devoirs.reduce((s,n)=>s+n.note,0)/devoirs.length).toFixed(2) : '—';
+      const compo = compositionsEleve.find(c=>c.trimestre===trimestre && c.matiere===matiere);
+      html += `<tr><td>T${trimestre}</td><td>${matiere}</td><td>${moyDevoirs}</td><td>${compo?compo.note.toFixed(2):'—'}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+    contNotes.innerHTML = html;
+  }
+}
+
+window.retourVerif = function(){
+  sessionStorage.removeItem('eleve_verifie_id');
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('ecran-verif').classList.remove('hidden');
+  document.getElementById('v-matricule').value = '';
+  document.getElementById('v-nom').value = '';
+  document.getElementById('v-prenom').value = '';
+  document.getElementById('v-classe').value = '';
+};
+</script>
+</body>
+</html>
