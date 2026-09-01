@@ -1768,12 +1768,22 @@ window.sauvegarderLivreCompte = () => sauvegarderDansFirestore('livreCompte', li
 
 // Cache selon le rôle : onglets invisibles pour certains rôles.
 // "admin" voit tout. Ajuster ces listes selon les besoins de chaque école.
-const ONGLETS_RESTREINTS = {
-  prof: ['tarifs', 'livre', 'equipe'],
-  comptable: ['equipe']
+const TOUS_LES_ONGLETS = ['tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe'];
+
+// On définit ce que CHAQUE rôle a le droit de voir, puis on déduit
+// automatiquement la liste des onglets à cacher pour ce rôle.
+const ONGLETS_AUTORISES = {
+  prof: ['classes','presence','cahier','devoirs','notes','bulletins','edt'],
+  comptable: ['tableau','tarifs','livre','recus']
+  // admin : pas dans cette liste = accès à tout
 };
 
-function appliquerRestrictionsRole(){
+const ONGLETS_RESTREINTS = {};
+Object.keys(ONGLETS_AUTORISES).forEach(role=>{
+  ONGLETS_RESTREINTS[role] = TOUS_LES_ONGLETS.filter(o => !ONGLETS_AUTORISES[role].includes(o));
+});
+
+function cacherOngletsRestreints(){
   document.querySelectorAll('.tab[data-tab]').forEach(t=>t.style.display='');
   if(!USER_ROLE || USER_ROLE === 'admin') return;
   const caches = ONGLETS_RESTREINTS[USER_ROLE] || [];
@@ -1781,6 +1791,18 @@ function appliquerRestrictionsRole(){
     const el = document.querySelector(`.tab[data-tab="${nom}"]`);
     if(el) el.style.display='none';
   });
+}
+
+// Si l'onglet par défaut (tableau) est caché pour ce rôle, on ouvre
+// le premier onglet auquel il a accès à la place d'un écran vide.
+// À appeler APRÈS le chargement des données (sinon la page ciblée est vide).
+function redirigerVersOngletParDefaut(){
+  if(!USER_ROLE || USER_ROLE === 'admin') return;
+  const caches = ONGLETS_RESTREINTS[USER_ROLE] || [];
+  if(caches.includes('tableau')){
+    const autorises = ONGLETS_AUTORISES[USER_ROLE] || [];
+    if(autorises.length > 0) showTab(autorises[0]);
+  }
 }
 
 // Récupère le profil (école + rôle) lié au compte connecté
@@ -1801,8 +1823,9 @@ onAuthStateChanged(auth, async (user)=>{
       ECOLE_ID = profil.ecoleId;
       USER_ROLE = profil.role || 'admin';
       document.getElementById('login-screen').style.display='none';
-      appliquerRestrictionsRole();
+      cacherOngletsRestreints();
       await initialiserDonnees();
+      redirigerVersOngletParDefaut();
     } catch(e){
       console.error(e);
       document.getElementById('login-error').textContent = e.message || "Erreur de chargement du profil.";
