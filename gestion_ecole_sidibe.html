@@ -611,6 +611,8 @@ Diakité	Fatoumata	2012	1317	65987654" style="font-size:13px;padding:9px 11px;bo
     <button class="filter-btn" onclick="setFiltreSemestreDevoirs('S2',this)">Semestre 2</button>
   </div>
 
+  <button class="btn btn-blue btn-full" style="margin-bottom:10px" onclick="imprimerListeDevoirs()">🖨️ Imprimer la liste des devoirs</button>
+
   <div id="liste-devoirs"></div>
 </div>
 
@@ -3098,10 +3100,96 @@ function renderDevoirs(){
           <div class="cahier-classe">${d.classeLabel}${d.type==='pro'?' <span class="badge-pro">Pro</span>':''} — ${d.matiere}</div>
           <div class="cahier-meta">${d.semestre.replace('S','Semestre ')}${d.maitreNom?' • '+d.maitreNom:''}${d.dateRemise?' • À remettre le '+d.dateRemise:''}</div>
         </div>
+        <button class="btn btn-blue" style="font-size:11px;padding:5px 8px" onclick="imprimerDevoirIndividuel(${d.id})">🖨</button>
         <button class="btn btn-red" style="font-size:11px;padding:5px 8px" onclick="supprimerDevoir(${d.id})">🗑</button>
       </div>
       <div class="cahier-contenu" style="white-space:pre-line">${d.contenu}</div>
     </div>`).join('');
+}
+
+// ========== IMPRESSION DES DEVOIRS ==========
+function imprimerDevoirIndividuel(id){
+  const d = devoirs.find(dv=>dv.id===id);
+  if(!d) return;
+  const fenetre = window.open('', '_blank');
+  fenetre.document.write(`<html><head><title>Devoir - ${d.matiere}</title>
+    <style>
+      body{font-family:sans-serif;padding:30px;color:#222}
+      .entete{text-align:center;border-bottom:2px solid #0B2545;padding-bottom:12px;margin-bottom:20px}
+      .entete .ecole{font-weight:700;font-size:17px;color:#0B2545}
+      .entete .type-doc{font-size:13px;color:#888;margin-top:2px}
+      .infos{margin-bottom:18px;font-size:14px;line-height:1.9}
+      .infos b{color:#0B2545}
+      .contenu-titre{font-weight:700;margin:16px 0 8px;font-size:14px;color:#0B2545}
+      .contenu{white-space:pre-line;font-size:14px;line-height:1.7;border:1px solid #ddd;border-radius:6px;padding:14px}
+      .zone-nom{margin-top:40px;border-top:1px solid #ccc;padding-top:10px;font-size:13px;color:#555}
+    </style>
+    </head><body>
+      <div class="entete">
+        <div class="ecole">🏫 École Privée Ousmane Sidibé</div>
+        <div class="type-doc">Devoir à faire${d.type==='pro'?' — Filière professionnelle':''}</div>
+      </div>
+      <div class="infos">
+        <div><b>Classe / Filière :</b> ${d.classeLabel}</div>
+        <div><b>Matière :</b> ${d.matiere}</div>
+        <div><b>${d.semestre.replace('S','Semestre ')}</b>${d.maitreNom?' • <b>Maître :</b> '+d.maitreNom:''}</div>
+        ${d.dateRemise?`<div><b>Date de remise :</b> ${d.dateRemise}</div>`:''}
+      </div>
+      <div class="contenu-titre">Énoncé</div>
+      <div class="contenu">${d.contenu}</div>
+      <div class="zone-nom">Nom et prénom de l'élève : ____________________________</div>
+    </body></html>`);
+  fenetre.document.close();
+  fenetre.print();
+}
+
+function imprimerListeDevoirs(){
+  // Reprend le même filtre (recherche + semestre) que ce qui est actuellement affiché à l'écran
+  const q = rechercheDevoirsActive.toLowerCase();
+  let liste = devoirs.filter(d=>{
+    if(filtreSemestreDevoirsActif!=='tous' && d.semestre!==filtreSemestreDevoirsActif) return false;
+    if(!q) return true;
+    return (d.classeLabel||'').toLowerCase().includes(q)
+      || (d.matiere||'').toLowerCase().includes(q)
+      || (d.maitreNom||'').toLowerCase().includes(q)
+      || (d.contenu||'').toLowerCase().includes(q);
+  }).sort((a,b)=>b.id-a.id);
+
+  if(!liste.length){ alert('Aucun devoir à imprimer pour ce filtre.'); return; }
+
+  const titreFiltre = filtreSemestreDevoirsActif==='tous' ? 'Tous les semestres' : filtreSemestreDevoirsActif.replace('S','Semestre ');
+  const fenetre = window.open('', '_blank');
+  fenetre.document.write(`<html><head><title>Liste des devoirs</title>
+    <style>
+      body{font-family:sans-serif;padding:24px;color:#222}
+      .entete{text-align:center;border-bottom:2px solid #0B2545;padding-bottom:12px;margin-bottom:18px}
+      .entete .ecole{font-weight:700;font-size:17px;color:#0B2545}
+      .entete .sous{font-size:12px;color:#888;margin-top:2px}
+      table{border-collapse:collapse;width:100%}
+      th,td{border:1px solid #ccc;padding:7px 8px;font-size:12px;text-align:left;vertical-align:top}
+      th{background:#e7f0fa;color:#0B2545}
+    </style>
+    </head><body>
+      <div class="entete">
+        <div class="ecole">🏫 École Privée Ousmane Sidibé</div>
+        <div class="sous">Liste des devoirs — ${titreFiltre}${q?' • Recherche : "'+q+'"':''}</div>
+      </div>
+      <table>
+        <thead><tr><th>Classe / Filière</th><th>Matière</th><th>Semestre</th><th>Maître</th><th>Date de remise</th></tr></thead>
+        <tbody>
+        ${liste.map(d=>`
+          <tr>
+            <td>${d.classeLabel}${d.type==='pro'?' (Pro)':''}</td>
+            <td>${d.matiere}</td>
+            <td>${d.semestre.replace('S','Semestre ')}</td>
+            <td>${d.maitreNom||'—'}</td>
+            <td>${d.dateRemise||'—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </body></html>`);
+  fenetre.document.close();
+  fenetre.print();
 }
 
 // ========== LIVRE DE COMPTE ==========
@@ -3519,6 +3607,15 @@ function getMoyenneAnnuelleDEF(eleveId, niveau){
   return valeurs.reduce((s,v)=>s+v,0)/valeurs.length;
 }
 
+// Renvoie la moyenne annuelle d'un élève avec la formule adaptée à son niveau
+// (7è/8è/9è = formule DEF, sinon formule générale).
+function getMoyenneAnnuellePourPassage(eleve){
+  if(['7eme','8eme','9eme'].includes(eleve.niveau)){
+    return getMoyenneAnnuelleDEF(eleve.id, eleve.niveau);
+  }
+  return getMoyenneAnnuelle(eleve.id);
+}
+
 function renderBulletinDEF(e, periode, periodeLabel, eleveId){
   const cont = document.getElementById('apercu-bulletin');
   const logoSrc = document.querySelector('.header-logo') ? document.querySelector('.header-logo').src : '';
@@ -3890,6 +3987,8 @@ function renderPassage(){
     const soldee = getReste(e)<=0;
     const suivant = niveauSuivant(e.niveau);
     const labelSuivant = suivant==='BAC' ? '🎓 Fin de cycle (Bac)' : (suivant ? nomNiveaux[suivant] : '⚠️ À choisir manuellement (changement de série)');
+    const moyAnnuelle = getMoyenneAnnuellePourPassage(e);
+    const admissible = moyAnnuelle!==null && moyAnnuelle>=10;
     return `
     <div class="eleve-card">
       <div class="eleve-header" onclick="toggleEleve(${e.id})" style="cursor:pointer">
@@ -3900,10 +3999,14 @@ function renderPassage(){
         <span class="badge ${soldee?'badge-ok':'badge-zero'}">${soldee?'✅ Scolarité payée':'❌ Reste '+getReste(e).toLocaleString()+' FCFA'}</span>
       </div>
       <div class="eleve-body open" style="padding-top:0">
+        <div style="font-size:12px;color:${moyAnnuelle!==null?(admissible?'var(--green)':'var(--red)'):'var(--muted)'};margin-bottom:6px">
+          Moyenne annuelle : ${moyAnnuelle!==null?moyAnnuelle.toFixed(2)+'/20':'— (pas encore de notes)'}
+        </div>
         <div class="pay-row">
           <span class="pay-label">Passe en classe supérieure ?</span>
-          <input type="checkbox" id="chk-passage-${e.id}" ${soldee?'':''} style="width:18px;height:18px">
+          <input type="checkbox" id="chk-passage-${e.id}" ${admissible?'checked':''} style="width:18px;height:18px">
         </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${moyAnnuelle!==null?(admissible?'✓ Pré-coché automatiquement (moyenne ≥ 10)':'Non coché (moyenne < 10) — coche manuellement si tu veux faire une exception'):'Coche manuellement, aucune note enregistrée pour calculer la moyenne'}</div>
         ${!soldee?'<div style="font-size:12px;color:var(--red);margin-top:4px">⚠️ Scolarité non soldée — coche uniquement si tu veux faire une exception.</div>':''}
         ${(suivant===null && suivant!=='BAC')?`
         <div class="field" style="margin-top:8px">
