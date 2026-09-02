@@ -341,11 +341,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
       <div class="field"><label>Niveau (classe)</label><select id="imp-niveau"></select></div>
     </div>
     <div class="field field-full" style="margin-bottom:10px">
-      <label>Coller les noms ici (une ligne par élève : Nom [Tab] Prénom [Tab] Naissance [Tab] Matricule [Tab] Tél. parent)</label>
-      <textarea id="imp-texte" rows="6" placeholder="Sidibé	Aminata	2012	1315	76123456
+      <label>Coller les noms ici (une ligne par élève : Nom [Tab] Prénom [Tab] Naissance [Tab] Matricule [Tab] Tél. parent [Tab] Montant déjà payé — cette dernière colonne est facultative)</label>
+      <textarea id="imp-texte" rows="6" placeholder="Sidibé	Aminata	2012	1315	76123456	25000
 Traoré	Ibrahim	2011	1316	76123456
-Diakité	Fatoumata	2012	1317	65987654" style="font-size:13px;padding:9px 11px;border-radius:7px;border:1px solid var(--border);width:100%;font-family:inherit;resize:vertical"></textarea>
+Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 11px;border-radius:7px;border:1px solid var(--border);width:100%;font-family:inherit;resize:vertical"></textarea>
     </div>
+    <div style="font-size:11px;color:var(--muted);margin:-4px 0 10px">💡 La colonne "Montant déjà payé" est facultative — laissez-la vide si l'élève n'a encore rien payé.</div>
     <button class="btn btn-gold btn-full" onclick="importerEleves()">📥 Importer la liste</button>
   </div>
 
@@ -2151,7 +2152,7 @@ function importerEleves(){
   const tarif = inscription + t1 + t2 + t3;
 
   const lignes = texte.split('\n').map(l=>l.replace(/\r/g,'')).filter(l=>l.trim().length>0);
-  let ajoutes = 0, ignorees = 0;
+  let ajoutes = 0, ignorees = 0, avecPaiement = 0, totalPaye = 0;
   lignes.forEach((ligne, idx)=>{
     // Colonnes séparées par une tabulation (copié depuis Excel), sinon on tente une séparation par espaces multiples
     let cols = ligne.split('\t');
@@ -2161,17 +2162,23 @@ function importerEleves(){
     const naissance = (cols[2]||'').trim();
     const matricule = (cols[3]||'').trim();
     const tel = (cols[4]||'').trim();
+    const montantPayeSaisi = parseInt((cols[5]||'0').replace(/[^\d]/g,'')) || 0;
     if(!nom || !prenom){ ignorees++; return; }
 
-    const paiements = [{label:'Inscription',montant:inscription,payee:false,obligatoire:true}];
-    eleves.push({id:Date.now()+idx,nom,prenom,matricule,naissance,cycle,niveau,mode:'complet',tel,tarif,paiements,paye:0,historique:[]});
+    const paiements = [{label:'Inscription',montant:inscription,payee: montantPayeSaisi>=inscription,obligatoire:true}];
+    const paye = Math.min(montantPayeSaisi, tarif);
+    eleves.push({id:Date.now()+idx,nom,prenom,matricule,naissance,cycle,niveau,mode:'complet',tel,tarif,paiements,paye,historique:[]});
     ajoutes++;
+    if(paye>0){ avecPaiement++; totalPaye += paye; }
   });
 
   sauvegarder();
   document.getElementById('imp-texte').value='';
   renderEleves();
-  alert(`✅ ${ajoutes} élève(s) importé(s) en ${nomNiveaux[niveau]}.` + (ignorees?`\n⚠️ ${ignorees} ligne(s) ignorée(s) (nom ou prénom manquant).`:''));
+  let msg = `✅ ${ajoutes} élève(s) importé(s) en ${nomNiveaux[niveau]}.`;
+  if(ignorees) msg += `\n⚠️ ${ignorees} ligne(s) ignorée(s) (nom ou prénom manquant).`;
+  if(avecPaiement) msg += `\n💰 ${avecPaiement} élève(s) avec un paiement déjà enregistré (${totalPaye.toLocaleString()} FCFA au total).`;
+  alert(msg);
 }
 
 // ========== AJOUTER ÉLÈVE ==========
