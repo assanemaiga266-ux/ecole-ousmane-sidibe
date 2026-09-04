@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -40,6 +41,30 @@
   table{width:100%;border-collapse:collapse;font-size:12.5px}
   th,td{padding:6px 4px;text-align:left;border-bottom:1px solid var(--border)}
   th{color:var(--muted);font-size:11px;font-weight:600}
+  .bul-select{width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:13px;margin-bottom:10px;font-family:inherit}
+  .bul-republique{text-align:center;font-size:11px;font-weight:700;letter-spacing:.4px;color:#1a1a1a;margin-bottom:10px}
+  .bul-republique .devise{font-weight:400;font-style:italic;font-size:10.5px;color:var(--muted)}
+  .bul-ecole-head{text-align:center;border-bottom:2px solid var(--blue);padding-bottom:10px;margin-bottom:12px}
+  .bul-ecole-head .nom{font-weight:700;font-size:15px;color:var(--blue)}
+  .bul-ecole-head .sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .bul-titre{text-align:center;font-weight:700;font-size:13.5px;color:var(--blue);margin:8px 0 4px}
+  .bul-annee{text-align:center;font-size:11px;color:var(--muted);margin-bottom:12px}
+  .bul-info{font-size:12px;color:#1a1a1a;margin-bottom:10px;line-height:1.9;display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
+  .bul-info span{color:var(--muted)}
+  .bul-section-title{font-weight:700;font-size:12.5px;color:var(--blue);margin:14px 0 6px;border-top:1px solid var(--border);padding-top:10px}
+  .bul-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .bul-stat{background:#f6f8fa;border-radius:8px;padding:9px}
+  .bul-stat .l{font-size:10.5px;color:var(--muted)}
+  .bul-stat .v{font-size:15px;font-weight:700}
+  .bul-appreciation{margin-top:10px;font-size:13px;line-height:1.9}
+  .bul-signatures{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}
+  .bul-sig-box{font-size:11px;text-align:center;color:var(--muted)}
+  .bul-sig-line{border-top:1px solid #999;margin-top:32px;padding-top:4px}
+  .print-btn{width:100%;padding:11px;border-radius:8px;border:none;background:var(--gold);color:#fff;font-weight:700;font-size:13px;cursor:pointer;margin-top:12px}
+  @media print{
+    .header, .print-btn, #ecran-verif, select{display:none !important}
+    .form-box{border:none;box-shadow:none}
+  }
 </style>
 </head>
 <body>
@@ -90,6 +115,17 @@
       <div class="sec-title">📝 Notes</div>
       <div id="notes-contenu"></div>
     </div>
+
+    <div class="form-box">
+      <div class="sec-title">📄 Bulletin</div>
+      <select id="bul-periode" class="bul-select" onchange="afficherBulletinParent()">
+        <option value="1">1er trimestre</option>
+        <option value="2">2ème trimestre</option>
+        <option value="3">3ème trimestre</option>
+        <option value="annee">Année complète</option>
+      </select>
+      <div id="bulletin-contenu"></div>
+    </div>
   </div>
 </div>
 
@@ -133,7 +169,7 @@ const niveaux = {
 };
 const tousNiveaux = [...niveaux.m, ...niveaux.p, ...niveaux.s, ...niveaux.l];
 
-let eleves = [], presences = [], notes = [], compositions = [];
+let eleves = [], presences = [], notes = [], compositions = [], tarifs = {}, anneeScolaire = '2025-2026', nomDirecteur = '';
 
 function peuplerSelectClasse(){
   const sel = document.getElementById('v-classe');
@@ -146,6 +182,9 @@ async function chargerToutesLesDonnees(){
   presences = await charger('presences', []);
   notes = await charger('notes', []);
   compositions = await charger('compositions', []);
+  tarifs = await charger('tarifs', {});
+  anneeScolaire = await charger('anneeScolaire', '2025-2026');
+  nomDirecteur = await charger('nomDirecteur', '');
 }
 // Chargement anticipé dès l'ouverture de la page pour une vérification rapide
 const chargementInitial = chargerToutesLesDonnees();
@@ -184,6 +223,7 @@ window.verifierEleve = async function(){
 };
 
 function afficherEspaceEleve(e){
+  eleveCourant = e;
   document.getElementById('ecran-verif').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('titre-eleve').textContent = `${e.prenom} ${e.nom}`;
@@ -239,7 +279,288 @@ function afficherEspaceEleve(e){
     html += `</tbody></table>`;
     contNotes.innerHTML = html;
   }
+
+  afficherBulletinParent();
 }
+
+let eleveCourant = null;
+
+const MATIERES = {
+  _primaire: ['Français','Mathématiques','Anglais','Histoire-Géographie','Sciences (SVT)','Physique-Chimie','Éducation Civique et Morale','Éducation Physique et Sportive','Dictée-Question'],
+  _college:  ['Rédaction','Dictée-Question','Mathématiques','Physique-Chimie','Anglais','Sciences Nat','Histoire-Géographie','Éducation Civique et Morale','Éducation Physique','Musique','Dessin','Enseignement Ménager','Lecture','Récitation','Conduite'],
+  '10eme':   ['Mathématiques','Physique-Chimie','Sciences (SVT)','Anglais','Économie','Arts (Dramatique ou Musique)','Histoire-Géographie','Français'],
+  '11sci':   ['Mathématiques','Physique-Chimie','Sciences (SVT)','Anglais','Éducation Civique et Morale','Éducation Physique et Sportive','Histoire-Géographie','Français'],
+  '11let':   ['Mathématiques','Anglais','Philosophie','Arts (Dramatique ou Musique)','Éducation Civique et Morale','Éducation Physique et Sportive','Histoire','Géographie','Français'],
+  '11ses':   ['Philosophie','Mathématiques','Anglais','Histoire','Géographie','Éducation Civique et Morale','Éducation Physique et Sportive','Comptabilité','Économie','Maths fine / Maths général'],
+  tse:       ['Mathématiques','Physique','Chimie','Philosophie','Sciences (SVT)','Anglais'],
+  tsexp:     ['Mathématiques','Physique-Chimie','Philosophie','Biologie','Anglais','Géologie'],
+  tseco:     ['Économie','Comptabilité','Géographie','Anglais','Philosophie','Maths fine / Maths général'],
+  tss:       ['Sociologie','Philosophie','Mathématiques','Anglais','Histoire','Géographie'],
+  tll:       ['Anglais','Littérature','Linguistique','Philosophie','Mathématiques','Français'],
+  tall:      ['Mathématiques','Anglais','Philosophie','Arts (Dramatique ou Musique)','Histoire-Géographie','Français'],
+};
+function getMatieresNiveau(niv){
+  if(MATIERES[niv]) return MATIERES[niv];
+  if(['7eme','8eme','9eme'].includes(niv)) return MATIERES['_college'];
+  return MATIERES['_primaire'];
+}
+function getCycleEleve(niv){
+  if(['petit','moyen','grand','1ere','2eme','3eme','4eme','5eme','6eme'].includes(niv)) return 'primaire';
+  if(['7eme','8eme','9eme'].includes(niv)) return 'college';
+  return niv;
+}
+function getCoefficient(matiere, niv){
+  const cycle = getCycleEleve(niv);
+  const key = cycle+'|'+matiere;
+  return (tarifs.coefficients && tarifs.coefficients[key]) || 1;
+}
+function noteTrimestre40(eleveId, matiere, trimestre){
+  const devoirs = notes.filter(n=>n.eleveId===eleveId && n.matiere===matiere && n.trimestre===trimestre);
+  if(!devoirs.length) return null;
+  const moyenne20 = devoirs.reduce((s,n)=>s+n.note,0)/devoirs.length;
+  return { moyenne20: moyenne20, note40: moyenne20*2, nbDevoirs: devoirs.length };
+}
+function getComposition(eleveId, matiere, trimestre){
+  const c = compositions.find(x=>x.eleveId===eleveId && x.matiere===matiere && x.trimestre===trimestre);
+  return c ? c.note : null;
+}
+function getNotesTrimestrielles(eleveId, periode){
+  const e = eleves.find(x=>x.id===eleveId);
+  const devoirsEleve = notes.filter(n=>n.eleveId===eleveId && (periode==='annee' || n.trimestre===periode));
+  const cles = [...new Set(devoirsEleve.map(n=>n.matiere+'|'+n.trimestre))];
+  return cles.map(cle=>{
+    const [matiere, trimestre] = cle.split('|');
+    const r = noteTrimestre40(eleveId, matiere, trimestre);
+    const coef = e ? getCoefficient(matiere, e.niveau) : 1;
+    return { matiere, trimestre, ...r, coef };
+  });
+}
+function calculerMoyenneGenerale(notesTrim){
+  if(!notesTrim.length) return null;
+  const totalPondere = notesTrim.reduce((s,n)=>s+(n.note40*(n.coef||1)),0);
+  const totalCoef = notesTrim.reduce((s,n)=>s+(n.coef||1),0);
+  return (totalPondere/totalCoef).toFixed(2);
+}
+function calculerMoyenneGeneraleDEF(eleveId, niveau, trimestre){
+  const matieres = getMatieresNiveau(niveau);
+  let totalCoef = 0, somme = 0;
+  matieres.forEach(matiere=>{
+    const devoirs = noteTrimestre40(eleveId, matiere, trimestre);
+    const compo = getComposition(eleveId, matiere, trimestre);
+    if(!devoirs && compo===null) return;
+    const mc = devoirs ? devoirs.moyenne20 : 0;
+    const nc = compo!==null ? compo : 0;
+    const mg = (mc + nc) / 3;
+    const coef = getCoefficient(matiere, niveau);
+    totalCoef += coef;
+    somme += mg*coef;
+  });
+  return totalCoef>0 ? somme/totalCoef : null;
+}
+function getMoyenneAnnuelle(eleveId){
+  const valeurs = [];
+  ['1','2','3'].forEach(t=>{
+    const nt = getNotesTrimestrielles(eleveId, t);
+    const m = calculerMoyenneGenerale(nt);
+    if(m!==null) valeurs.push(parseFloat(m)/2);
+  });
+  if(!valeurs.length) return null;
+  return valeurs.reduce((s,v)=>s+v,0)/valeurs.length;
+}
+function getMoyenneAnnuelleDEF(eleveId, niveau){
+  const valeurs = [];
+  ['1','2','3'].forEach(t=>{
+    const m = calculerMoyenneGeneraleDEF(eleveId, niveau, t);
+    if(m!==null) valeurs.push(m);
+  });
+  if(!valeurs.length) return null;
+  return valeurs.reduce((s,v)=>s+v,0)/valeurs.length;
+}
+function getMoyDu1er(niveau, periode){
+  const camarades = eleves.filter(x=>x.niveau===niveau);
+  let meilleure = null;
+  camarades.forEach(x=>{
+    const nt = getNotesTrimestrielles(x.id, periode);
+    const m = calculerMoyenneGenerale(nt);
+    if(m!==null){
+      const val = parseFloat(m)/2;
+      if(meilleure===null || val>meilleure) meilleure = val;
+    }
+  });
+  return meilleure;
+}
+function getMoyDu1erDEF(niveau, trimestre){
+  const camarades = eleves.filter(x=>x.niveau===niveau);
+  let meilleure = null;
+  camarades.forEach(x=>{
+    const m = calculerMoyenneGeneraleDEF(x.id, niveau, trimestre);
+    if(m!==null && (meilleure===null || m>meilleure)) meilleure = m;
+  });
+  return meilleure;
+}
+function appreciationLettre(note20){
+  if(note20===null || note20===undefined || isNaN(note20)) return '—';
+  if(note20>=18) return 'Excellent';
+  if(note20>=16) return 'Très Bien';
+  if(note20>=14) return 'Bien';
+  if(note20>=12) return 'Assez Bien';
+  if(note20>=10) return 'Passable';
+  if(note20>=8)  return 'Mal';
+  return 'Médiocre';
+}
+function appreciationDirecteurTexte(moyenne20){
+  if(moyenne20===null || moyenne20===undefined || isNaN(moyenne20)) return '—';
+  if(moyenne20>=16) return 'Travail Excellent';
+  if(moyenne20>=14) return 'Très Bon Travail';
+  if(moyenne20>=12) return 'Bon Travail';
+  if(moyenne20>=10) return 'Travail Assez Bon';
+  if(moyenne20>=8)  return 'Travail Médiocre';
+  return 'Travail Insuffisant';
+}
+function classeAbregee(niv){
+  const m = { '7eme':'7è', '8eme':'8è', '9eme':'9è' };
+  return m[niv] || nomNiveaux[niv] || niv;
+}
+function dateAuj(){ return new Date().toLocaleDateString('fr-FR'); }
+
+// Affiche le bulletin de l'élève courant pour la période choisie
+window.afficherBulletinParent = function(){
+  const e = eleveCourant;
+  const cont = document.getElementById('bulletin-contenu');
+  if(!e || !cont) return;
+  const periode = document.getElementById('bul-periode').value;
+  const periodeLabel = periode==='annee' ? 'Année scolaire complète' : `${periode}${periode==='1'?'er':'ème'} trimestre`;
+  const reste = Math.max(0, (e.tarif||0) - (e.paye||0));
+
+  if(['7eme','8eme','9eme'].includes(e.niveau)){
+    // ---- Bulletin DEF (7è/8è/9è) ----
+    const matieres = getMatieresNiveau(e.niveau);
+    const trimQuery = periode==='annee' ? '1' : periode;
+    let totalCoef = 0, somme = 0;
+    const lignes = matieres.map(matiere=>{
+      const devoirs = noteTrimestre40(e.id, matiere, trimQuery);
+      const compo = getComposition(e.id, matiere, trimQuery);
+      const coef = getCoefficient(matiere, e.niveau);
+      if(!devoirs && compo===null){
+        return `<tr><td>${matiere}</td><td style="text-align:center">—</td><td style="text-align:center">—</td><td style="text-align:center">—</td><td style="text-align:center">${coef}</td><td style="text-align:center">—</td></tr>`;
+      }
+      const mc = devoirs ? devoirs.moyenne20 : 0;
+      const nc = compo!==null ? compo : 0;
+      const mg = (mc + nc) / 3;
+      const moyCoef = mg*coef;
+      totalCoef += coef; somme += moyCoef;
+      return `<tr><td>${matiere}</td><td style="text-align:center">${mc.toFixed(2)}</td><td style="text-align:center">${nc.toFixed(2)}</td><td style="text-align:center">${mg.toFixed(2)}</td><td style="text-align:center">${coef}</td><td style="text-align:center">${moyCoef.toFixed(2)}</td></tr>`;
+    }).join('');
+    const moyenneGenerale = totalCoef>0 ? (somme/totalCoef) : null;
+    const moyDu1er = getMoyDu1erDEF(e.niveau, trimQuery);
+    const moyAnnuelle = getMoyenneAnnuelleDEF(e.id, e.niveau);
+    const estAnnuel = periode==='annee';
+    const decisionPasse = estAnnuel && moyAnnuelle!==null ? (moyAnnuelle>=10) : null;
+    const moyRef = estAnnuel ? moyAnnuelle : moyenneGenerale;
+
+    cont.innerHTML = `
+      <div class="bul-republique">
+        RÉPUBLIQUE DU MALI<br>
+        <span class="devise">Un Peuple — Un But — Une Foi</span><br>
+        CAP DE KOUTIALA
+      </div>
+      <div class="bul-ecole-head">
+        <div class="nom">École Privée Ousmane Sidibé</div>
+        <div class="sub">Koutiala N'Tonasso — Tél : 76024095 / 62984793</div>
+      </div>
+      <div class="bul-titre">Bulletin du ${periode==='annee'?'année scolaire complète':periode+(periode==='1'?'er':'ème')+' trimestre'}</div>
+      <div class="bul-annee">Année scolaire ${anneeScolaire||'—'}</div>
+      <div class="bul-info">
+        <div><span>N° Matricule : </span><b>${e.matricule||'—'}</b></div>
+        <div><span>Classe : </span><b>${classeAbregee(e.niveau)}</b></div>
+        <div><span>Nom et prénom : </span><b>${e.prenom} ${e.nom}</b></div>
+        <div><span>Naissance : </span><b>${e.naissance||'—'}</b></div>
+        <div style="grid-column:1/-1"><span>Date d'édition : </span><b>${dateAuj()}</b></div>
+      </div>
+      <div class="bul-section-title">Résultats par matière</div>
+      <table>
+        <thead><tr><th>Matière</th><th style="text-align:center">MC/20</th><th style="text-align:center">NC/40</th><th style="text-align:center">MG</th><th style="text-align:center">Coef</th><th style="text-align:center">Moy.C</th></tr></thead>
+        <tbody>${lignes}
+          <tr style="font-weight:700"><td colspan="4">Total</td><td style="text-align:center">${totalCoef}</td><td style="text-align:center">${somme.toFixed(2)}</td></tr>
+        </tbody>
+      </table>
+      <div class="bul-stats">
+        <div class="bul-stat"><div class="l">Moyenne</div><div class="v" style="color:${moyenneGenerale!==null&&moyenneGenerale>=10?'var(--green)':'var(--red)'}">${moyenneGenerale!==null?moyenneGenerale.toFixed(2):'—'}/20</div></div>
+        <div class="bul-stat"><div class="l">Moy. du 1er</div><div class="v">${moyDu1er!==null?moyDu1er.toFixed(2):'—'}/20</div></div>
+        <div class="bul-stat" style="grid-column:1/-1"><div class="l">Moyenne annuelle (MOY.AN)</div><div class="v">${moyAnnuelle!==null?moyAnnuelle.toFixed(2):'—'}/20</div></div>
+      </div>
+      <div class="bul-section-title">Appréciation du Directeur</div>
+      <div class="bul-appreciation">
+        <div><span style="color:var(--muted)">Appréciation : </span><b style="color:${moyRef!==null?(moyRef>=10?'var(--green)':'var(--red)'):'#1a1a1a'}">${appreciationDirecteurTexte(moyRef)}</b></div>
+        ${decisionPasse!==null?`<div><span style="color:var(--muted)">Décision : </span><b style="color:${decisionPasse?'var(--green)':'var(--red)'}">${decisionPasse?'Passe':'Redouble'}</b></div>`:''}
+        <div><span style="color:var(--muted)">Le Directeur : </span><b>${nomDirecteur||'—'}</b></div>
+      </div>
+      <div class="bul-section-title">Situation financière</div>
+      <div class="bul-stats">
+        <div class="bul-stat"><div class="l">Scolarité totale</div><div class="v">${(e.tarif||0).toLocaleString()} FCFA</div></div>
+        <div class="bul-stat"><div class="l">Reste à payer</div><div class="v" style="color:${reste>0?'var(--red)':'var(--green)'}">${reste.toLocaleString()} FCFA</div></div>
+      </div>
+      <div class="bul-signatures">
+        <div class="bul-sig-box">Cachet et signature du Directeur<div class="bul-sig-line">&nbsp;</div></div>
+        <div class="bul-sig-box">Signature du parent (Père, Mère ou Tuteur)<div class="bul-sig-line">&nbsp;</div></div>
+      </div>
+      <button class="print-btn" onclick="window.print()">🖨️ Imprimer le bulletin</button>
+    `;
+    return;
+  }
+
+  // ---- Bulletin standard (maternelle, primaire, lycée) ----
+  const notesTrim = getNotesTrimestrielles(e.id, periode);
+  const moyenne = calculerMoyenneGenerale(notesTrim);
+  const moyDu1er = periode!=='annee' ? getMoyDu1er(e.niveau, periode) : null;
+  const moyAnnuelle = periode==='annee' ? getMoyenneAnnuelle(e.id) : null;
+
+  const lignesNotes = notesTrim.length ? notesTrim.map(n=>`
+    <tr><td>${n.matiere}${periode==='annee'?' (T'+n.trimestre+')':''}</td><td style="text-align:center">${n.coef||1}</td><td style="text-align:right">${n.note40.toFixed(2)}/40</td></tr>
+  `).join('') : '<tr><td colspan="3" style="color:var(--muted)">Aucune note enregistrée pour cette période</td></tr>';
+
+  cont.innerHTML = `
+    <div class="bul-republique">
+      RÉPUBLIQUE DU MALI<br>
+      <span class="devise">Un Peuple — Un But — Une Foi</span><br>
+      CAP DE KOUTIALA
+    </div>
+    <div class="bul-ecole-head">
+      <div class="nom">École Privée Ousmane Sidibé</div>
+      <div class="sub">N'tonasso, Koutiala — Mali</div>
+    </div>
+    <div class="bul-titre">Bulletin scolaire — ${periodeLabel}</div>
+    <div class="bul-annee">Année scolaire ${anneeScolaire||'—'}</div>
+    <div class="bul-info">
+      <div><span>Élève : </span><b>${e.prenom} ${e.nom}</b></div>
+      <div><span>Niveau : </span><b>${nomNiveaux[e.niveau]||e.niveau}</b></div>
+      <div><span>Téléphone parent : </span><b>${e.tel||'—'}</b></div>
+      <div><span>Date d'édition : </span><b>${dateAuj()}</b></div>
+    </div>
+    <div class="bul-section-title">Résultats par matière</div>
+    <table>
+      <thead><tr><th>Matière</th><th style="text-align:center">Coef.</th><th style="text-align:right">Note /40</th></tr></thead>
+      <tbody>
+        ${lignesNotes}
+        ${moyenne ? `<tr style="font-weight:700"><td colspan="2">Moyenne générale (pondérée)</td><td style="text-align:right">${moyenne}/40</td></tr>` : ''}
+      </tbody>
+    </table>
+    <div class="bul-stats">
+      ${moyDu1er!==null?`<div class="bul-stat"><div class="l">Moy. du 1er de la classe</div><div class="v">${moyDu1er.toFixed(2)}/20</div></div>`:''}
+      ${moyAnnuelle!==null?`<div class="bul-stat" style="grid-column:1/-1"><div class="l">Moyenne annuelle</div><div class="v">${moyAnnuelle.toFixed(2)}/20</div></div>`:''}
+    </div>
+    <div class="bul-section-title">Situation financière</div>
+    <div class="bul-stats">
+      <div class="bul-stat"><div class="l">Scolarité totale</div><div class="v">${(e.tarif||0).toLocaleString()} FCFA</div></div>
+      <div class="bul-stat"><div class="l">Reste à payer</div><div class="v" style="color:${reste>0?'var(--red)':'var(--green)'}">${reste.toLocaleString()} FCFA</div></div>
+    </div>
+    <div class="bul-signatures">
+      <div class="bul-sig-box">Cachet et signature du Directeur<div class="bul-sig-line">&nbsp;</div></div>
+      <div class="bul-sig-box">Signature du parent (Père, Mère ou Tuteur)<div class="bul-sig-line">&nbsp;</div></div>
+    </div>
+    <button class="print-btn" onclick="window.print()">🖨️ Imprimer le bulletin</button>
+  `;
+};
 
 window.retourVerif = function(){
   sessionStorage.removeItem('eleve_verifie_id');
