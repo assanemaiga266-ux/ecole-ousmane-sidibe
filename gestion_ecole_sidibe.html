@@ -1629,9 +1629,9 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
       <select id="eq-role">
         <option value="prof">🧑‍🏫 Professeur / Maître</option>
         <option value="comptable">💰 Comptable</option>
-        <option value="admin">👑 Admin</option>
       </select>
     </div>
+    <div style="font-size:11px;color:var(--muted);margin:-4px 0 8px">ℹ️ Pour créer un autre compte Admin, passe par la Console Firebase (comme pour ton propre compte) — pas depuis ce formulaire, pour des raisons de sécurité.</div>
     <div id="eq-erreur" style="color:#c0392b;font-size:13px;margin:6px 0;display:none"></div>
     <div class="modal-actions">
       <button class="btn btn-gray" style="flex:1" onclick="fermerModalEquipe()">Annuler</button>
@@ -1652,6 +1652,22 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
 </div>
 
 <!-- MODAL PAIEMENT MAÎTRE -->
+<!-- MODAL MODIFIER ÉLÈVE -->
+<div class="modal-overlay" id="modal-modif-eleve">
+  <div class="modal">
+    <div class="modal-title">✏️ Modifier les informations</div>
+    <div class="field"><label>Nom</label><input type="text" id="me-nom"></div>
+    <div class="field"><label>Prénom</label><input type="text" id="me-prenom"></div>
+    <div class="field"><label>N° Matricule</label><input type="text" id="me-matricule"></div>
+    <div class="field"><label>Date de naissance</label><input type="text" id="me-naissance" placeholder="Ex: 12/03/2015"></div>
+    <div class="field"><label>Téléphone parent</label><input type="text" id="me-tel" placeholder="Ex: 76123456"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" style="flex:1" onclick="fermerModifierEleve()">Annuler</button>
+      <button class="btn btn-green" style="flex:1" onclick="enregistrerModifierEleve()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-maitre">
   <div class="modal">
     <div class="modal-title" id="modal-nom-maitre">Salaire</div>
@@ -1777,8 +1793,9 @@ const TOUS_LES_ONGLETS = ['tableau','eleves','classes','maitres','presence','cah
 // automatiquement la liste des onglets à cacher pour ce rôle.
 const ONGLETS_AUTORISES = {
   prof: ['classes','presence','cahier','devoirs','notes','bulletins','edt'],
-  comptable: ['tableau','tarifs','livre','recus']
-  // admin : pas dans cette liste = accès à tout
+  comptable: ['tableau','tarifs','livre','recus'],
+  gestionnaire: TOUS_LES_ONGLETS.filter(o => o !== 'equipe')
+  // admin : pas dans cette liste = accès à tout, y compris Équipe
 };
 
 const ONGLETS_RESTREINTS = {};
@@ -1918,7 +1935,7 @@ function seDeconnecter(){
 }
 
 // ========== ÉQUIPE (admin uniquement) ==========
-const LABELS_ROLE = { admin: '👑 Admin', prof: '🧑‍🏫 Professeur', comptable: '💰 Comptable' };
+const LABELS_ROLE = { admin: '👑 Admin', gestionnaire: '🗂️ Gestionnaire', prof: '🧑‍🏫 Professeur', comptable: '💰 Comptable' };
 
 async function renderEquipe(){
   const zone = document.getElementById('equipe-liste');
@@ -2253,6 +2270,13 @@ function renderEleves(){
         <span class="badge ${badgeClass}">${badgeText}</span>
       </div>
       <div class="eleve-body" id="body-${e.id}">
+        <div class="sec-title" style="margin:0 0 6px;font-size:12px">ℹ️ Informations</div>
+        <div class="pay-row"><span class="pay-label">N° Matricule</span><span class="pay-val">${e.matricule||'—'}</span></div>
+        <div class="pay-row"><span class="pay-label">Date de naissance</span><span class="pay-val">${e.naissance||'—'}</span></div>
+        <div class="pay-row"><span class="pay-label">Téléphone parent</span><span class="pay-val">${e.tel||'—'}</span></div>
+        <div class="pay-row"><span class="pay-label">Cycle / Niveau</span><span class="pay-val">${e.cycle||'—'} • ${nomNiveaux[e.niveau]}</span></div>
+        <button class="btn btn-gray btn-full" style="font-size:12px;margin:8px 0 4px" onclick="ouvrirModifierEleve(${e.id})">✏️ Modifier ces informations</button>
+        <div class="sec-title" style="margin:14px 0 6px;font-size:12px">💰 Finances</div>
         <div class="pay-row"><span class="pay-label">Scolarité totale</span><span class="pay-val">${e.tarif.toLocaleString()} FCFA</span></div>
         <div class="pay-row"><span class="pay-label">Montant payé</span><span class="pay-val green">${e.paye.toLocaleString()} FCFA</span></div>
         <div class="pay-row"><span class="pay-label">Reste à payer</span><span class="pay-val ${reste>0?'red':'green'}">${reste.toLocaleString()} FCFA</span></div>
@@ -2329,6 +2353,38 @@ function renderPaiementRapide(e){
 
 function toggleEleve(id){
   document.getElementById('body-'+id).classList.toggle('open');
+}
+
+let eleveEnModificationId = null;
+function ouvrirModifierEleve(id){
+  const e = eleves.find(x=>x.id===id);
+  if(!e) return;
+  eleveEnModificationId = id;
+  document.getElementById('me-nom').value = e.nom||'';
+  document.getElementById('me-prenom').value = e.prenom||'';
+  document.getElementById('me-matricule').value = e.matricule||'';
+  document.getElementById('me-naissance').value = e.naissance||'';
+  document.getElementById('me-tel').value = e.tel||'';
+  document.getElementById('modal-modif-eleve').classList.add('open');
+}
+function fermerModifierEleve(){
+  document.getElementById('modal-modif-eleve').classList.remove('open');
+  eleveEnModificationId = null;
+}
+function enregistrerModifierEleve(){
+  const e = eleves.find(x=>x.id===eleveEnModificationId);
+  if(!e) return;
+  const nom = document.getElementById('me-nom').value.trim();
+  const prenom = document.getElementById('me-prenom').value.trim();
+  if(!nom || !prenom){ alert('Le nom et le prénom sont obligatoires.'); return; }
+  e.nom = nom;
+  e.prenom = prenom;
+  e.matricule = document.getElementById('me-matricule').value.trim();
+  e.naissance = document.getElementById('me-naissance').value.trim();
+  e.tel = document.getElementById('me-tel').value.trim();
+  sauvegarder();
+  fermerModifierEleve();
+  renderEleves();
 }
 
 function dateAuj(){
