@@ -73,16 +73,12 @@
 <div class="login-screen" id="ecran-verif">
   <div class="login-box">
     <h2>👨‍👩‍👧 Espace Parent</h2>
-    <p>École Privée Ousmane Sidibé<br>Renseignez les informations de votre enfant pour consulter son suivi</p>
-    <div class="err" id="verif-err">Aucun élève trouvé avec ces informations. Vérifiez l'orthographe ou contactez l'école.</div>
+    <p>École Privée Ousmane Sidibé<br>Entrez le matricule et le code secret remis par l'école</p>
+    <div class="err" id="verif-err">Matricule ou code incorrect. Vérifiez auprès de l'école.</div>
     <label>N° Matricule</label>
-    <input type="text" id="v-matricule" placeholder="Ex: 1315">
-    <label>Nom</label>
-    <input type="text" id="v-nom" placeholder="Ex: Sidibé">
-    <label>Prénom</label>
-    <input type="text" id="v-prenom" placeholder="Ex: Aminata">
-    <label>Classe</label>
-    <select id="v-classe"></select>
+    <input type="text" id="v-matricule" placeholder="Ex: 1315" inputmode="numeric">
+    <label>Code secret (4 chiffres)</label>
+    <input type="text" id="v-code" placeholder="Ex: 4821" inputmode="numeric" maxlength="4" onkeyup="if(event.key==='Enter')verifierEleve()">
     <button onclick="verifierEleve()">Voir le suivi de mon enfant</button>
   </div>
 </div>
@@ -171,12 +167,6 @@ const tousNiveaux = [...niveaux.m, ...niveaux.p, ...niveaux.s, ...niveaux.l];
 
 let eleves = [], presences = [], notes = [], compositions = [], tarifs = {}, anneeScolaire = '2025-2026', nomDirecteur = '';
 
-function peuplerSelectClasse(){
-  const sel = document.getElementById('v-classe');
-  sel.innerHTML = '<option value="">— Sélectionner —</option>' + tousNiveaux.map(n=>`<option value="${n}">${nomNiveaux[n]}</option>`).join('');
-}
-peuplerSelectClasse();
-
 async function chargerToutesLesDonnees(){
   eleves = await charger('eleves', []);
   presences = await charger('presences', []);
@@ -191,13 +181,11 @@ const chargementInitial = chargerToutesLesDonnees();
 
 window.verifierEleve = async function(){
   const matricule = document.getElementById('v-matricule').value.trim();
-  const nom = document.getElementById('v-nom').value.trim().toLowerCase();
-  const prenom = document.getElementById('v-prenom').value.trim().toLowerCase();
-  const classe = document.getElementById('v-classe').value;
+  const code = document.getElementById('v-code').value.trim();
   const err = document.getElementById('verif-err');
 
-  if(!matricule || !nom || !prenom || !classe){
-    err.textContent = "Veuillez remplir tous les champs.";
+  if(!matricule || !code){
+    err.textContent = "Veuillez remplir le matricule et le code secret.";
     err.style.display = 'block';
     return;
   }
@@ -206,13 +194,11 @@ window.verifierEleve = async function(){
 
   const eleve = eleves.find(e =>
     (e.matricule||'').trim() === matricule &&
-    (e.nom||'').trim().toLowerCase() === nom &&
-    (e.prenom||'').trim().toLowerCase() === prenom &&
-    e.niveau === classe
+    (e.codeParent||'').trim() === code
   );
 
   if(!eleve){
-    err.textContent = "Aucun élève trouvé avec ces informations. Vérifiez l'orthographe ou contactez l'école.";
+    err.textContent = "Matricule ou code incorrect. Vérifiez auprès de l'école.";
     err.style.display = 'block';
     return;
   }
@@ -567,9 +553,7 @@ window.retourVerif = function(){
   document.getElementById('app').classList.add('hidden');
   document.getElementById('ecran-verif').classList.remove('hidden');
   document.getElementById('v-matricule').value = '';
-  document.getElementById('v-nom').value = '';
-  document.getElementById('v-prenom').value = '';
-  document.getElementById('v-classe').value = '';
+  document.getElementById('v-code').value = '';
 };
 </script>
 </body>
