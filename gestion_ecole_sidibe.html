@@ -71,6 +71,17 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
 .badge-zero{background:var(--red-light);color:var(--red)}
 .eleve-body{padding:12px 14px;border-top:1px solid var(--border);display:none}
 .eleve-body.open{display:block}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
+.stat-card-title{font-weight:700;font-size:13.5px;color:var(--text);margin-bottom:10px}
+.stat-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:12px}
+.stat-bar-row .lbl{width:78px;flex-shrink:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat-bar-track{flex:1;background:#eee;border-radius:6px;height:14px;overflow:hidden}
+.stat-bar-fill{height:100%;border-radius:6px;transition:width .3s}
+.stat-bar-row .val{width:44px;flex-shrink:0;text-align:right;font-weight:700;color:var(--text)}
+.stat-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat-kpi{background:#f6f8fa;border-radius:8px;padding:10px;text-align:center}
+.stat-kpi .l{font-size:10.5px;color:var(--muted)}
+.stat-kpi .v{font-size:18px;font-weight:700;margin-top:2px}
 .pay-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border)}
 .pay-row:last-child{border-bottom:none}
 .pay-label{color:var(--muted)}
@@ -226,6 +237,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
     <input type="email" id="login-email" placeholder="Adresse email" autocomplete="username" onkeyup="if(event.key==='Enter')document.getElementById('login-pass').focus()">
     <input type="password" id="login-pass" placeholder="Mot de passe" autocomplete="current-password" onkeyup="if(event.key==='Enter')seConnecter()">
     <button class="btn btn-green btn-full" id="login-btn" onclick="seConnecter()">Se connecter</button>
+    <div style="text-align:center;margin-top:12px">
+      <a href="#" onclick="motDePasseOublie();return false" style="font-size:12.5px;color:#666;text-decoration:underline">Mot de passe oublié ?</a>
+    </div>
+    <div id="login-info" style="display:none;background:#e7f4ea;color:#1e7e34;border-radius:8px;padding:10px 12px;font-size:12.5px;margin-top:10px;text-align:center"></div>
   </div>
 </div>
 
@@ -258,6 +273,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
   <div class="tab" data-tab="edt" onclick="showTab('edt')">🗓️ Emploi du temps</div>
   <div class="tab" data-tab="calendrier" onclick="showTab('calendrier')">📅 Calendrier</div>
   <div class="tab" data-tab="equipe" onclick="showTab('equipe')">👥 Équipe</div>
+  <div class="tab" data-tab="statistiques" onclick="showTab('statistiques')">📊 Statistiques</div>
 </div>
 
 <!-- PAGE TABLEAU DE BORD -->
@@ -1504,6 +1520,14 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
     </div>
   </div>
 
+  <div class="form-box">
+    <div class="sec-title" style="margin-top:0">💾 Sauvegarde complète</div>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+      Télécharge un fichier contenant toutes les données de l'école (élèves, notes, finances, présences...). À garder en lieu sûr, ou à utiliser en cas de besoin de migration.
+    </div>
+    <button class="btn btn-blue btn-full" onclick="exporterSauvegardeComplete()">📥 Télécharger toutes les données</button>
+  </div>
+
   <div id="liste-annees"></div>
   <div id="detail-archive"></div>
 </div>
@@ -1618,6 +1642,11 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
   </div>
 </div>
 
+<!-- PAGE STATISTIQUES -->
+<div class="page" id="page-statistiques">
+  <div id="stats-contenu"><div style="text-align:center;color:var(--muted);padding:20px 0">Chargement...</div></div>
+</div>
+
 <!-- MODAL AJOUT MEMBRE ÉQUIPE -->
 <div class="modal-overlay" id="modal-equipe">
   <div class="modal">
@@ -1693,7 +1722,7 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
 // ========== FIREBASE CONFIGURATION ==========
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, doc, setDoc, getDoc, deleteDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD3mfTWWngbrXc4FyE8MNJvYF7YTEQ29EU",
@@ -1787,7 +1816,7 @@ window.sauvegarderLivreCompte = () => sauvegarderDansFirestore('livreCompte', li
 
 // Cache selon le rôle : onglets invisibles pour certains rôles.
 // "admin" voit tout. Ajuster ces listes selon les besoins de chaque école.
-const TOUS_LES_ONGLETS = ['tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe'];
+const TOUS_LES_ONGLETS = ['tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe','statistiques'];
 
 // On définit ce que CHAQUE rôle a le droit de voir, puis on déduit
 // automatiquement la liste des onglets à cacher pour ce rôle.
@@ -1860,6 +1889,7 @@ onAuthStateChanged(auth, async (user)=>{
 window._initialiserDonnees = initialiserDonnees;
 window._seConnecterFirebase = (email, pass) => signInWithEmailAndPassword(auth, email, pass);
 window._seDeconnecterFirebase = () => signOut(auth);
+window._reinitialiserMotDePasse = (email) => sendPasswordResetEmail(auth, email);
 
 // ===== GESTION D'ÉQUIPE (admin uniquement) =====
 // Crée un compte prof/comptable sans déconnecter l'admin en cours :
@@ -1926,6 +1956,29 @@ function messageErreurAuth(code){
   if(code==='auth/invalid-email') return "Adresse email invalide.";
   if(code==='auth/too-many-requests') return "Trop de tentatives, réessayez dans quelques minutes.";
   return "Erreur de connexion. Vérifiez votre connexion internet.";
+}
+
+function motDePasseOublie(){
+  const email = (document.getElementById('login-email').value || '').trim();
+  const err = document.getElementById('login-error');
+  const info = document.getElementById('login-info');
+  err.style.display = 'none';
+  info.style.display = 'none';
+
+  if(!email){
+    err.textContent = "Entrez d'abord votre adresse email dans le champ ci-dessus, puis cliquez sur ce lien.";
+    err.style.display = 'block';
+    return;
+  }
+  window._reinitialiserMotDePasse(email).then(()=>{
+    info.textContent = "📧 Email envoyé ! Vérifiez votre boîte de réception (et les spams) pour choisir un nouveau mot de passe.";
+    info.style.display = 'block';
+  }).catch(e=>{
+    // Par sécurité, Firebase peut renvoyer "user-not-found" — on reste volontairement discret
+    // pour ne pas révéler si un email existe ou non dans le système.
+    info.textContent = "📧 Si cet email correspond à un compte, un lien de réinitialisation vient d'être envoyé.";
+    info.style.display = 'block';
+  });
 }
 
 function seDeconnecter(){
@@ -2002,6 +2055,100 @@ async function retirerMembreEquipe(uid, nom){
   } catch(e){
     alert("Erreur : " + (e.message || e));
   }
+}
+
+// ========== STATISTIQUES ==========
+function getMoyenneTrimestre20(eleve, trimestre){
+  if(['7eme','8eme','9eme'].includes(eleve.niveau)){
+    return calculerMoyenneGeneraleDEF(eleve.id, eleve.niveau, trimestre);
+  }
+  const nt = getNotesTrimestrielles(eleve.id, trimestre);
+  const m = calculerMoyenneGenerale(nt);
+  return m!==null ? parseFloat(m)/2 : null;
+}
+
+function couleurTaux(pct){
+  if(pct>=70) return 'var(--green)';
+  if(pct>=40) return '#e8a63c';
+  return 'var(--red)';
+}
+
+function renderStatistiques(){
+  const cont = document.getElementById('stats-contenu');
+  if(!eleves.length){
+    cont.innerHTML = '<div class="stat-card" style="text-align:center;color:var(--muted)">Pas encore d\'élèves enregistrés pour calculer des statistiques.</div>';
+    return;
+  }
+
+  // --- KPIs généraux ---
+  const totalScolarite = eleves.reduce((s,e)=>s+(e.tarif||0),0);
+  const totalPaye = eleves.reduce((s,e)=>s+(e.paye||0),0);
+  const totalReste = totalScolarite - totalPaye;
+  const nbSoldes = eleves.filter(e=>((e.tarif||0)-(e.paye||0))<=0).length;
+
+  // --- Taux de réussite par niveau (moyenne annuelle >= 10) ---
+  const niveauxPresents = [...new Set(eleves.map(e=>e.niveau))];
+  const statsReussite = niveauxPresents.map(niv=>{
+    const elevesNiveau = eleves.filter(e=>e.niveau===niv);
+    const avecMoyenne = elevesNiveau.map(e=>getMoyenneAnnuellePourPassage(e)).filter(m=>m!==null);
+    if(!avecMoyenne.length) return {niv, pct:null, nb:elevesNiveau.length};
+    const reussis = avecMoyenne.filter(m=>m>=10).length;
+    return {niv, pct: Math.round((reussis/avecMoyenne.length)*100), nb: elevesNiveau.length};
+  }).sort((a,b)=> (b.pct||0)-(a.pct||0));
+
+  // --- Impayés par niveau (montant restant total) ---
+  const statsImpayes = niveauxPresents.map(niv=>{
+    const elevesNiveau = eleves.filter(e=>e.niveau===niv);
+    const reste = elevesNiveau.reduce((s,e)=>s+Math.max(0,(e.tarif||0)-(e.paye||0)),0);
+    return {niv, reste};
+  }).sort((a,b)=>b.reste-a.reste);
+  const maxReste = Math.max(1, ...statsImpayes.map(s=>s.reste));
+
+  // --- Moyenne générale de l'école par trimestre ---
+  const statsTrimestres = ['1','2','3'].map(t=>{
+    const valeurs = eleves.map(e=>getMoyenneTrimestre20(e,t)).filter(m=>m!==null);
+    if(!valeurs.length) return {t, moy:null};
+    return {t, moy: valeurs.reduce((s,v)=>s+v,0)/valeurs.length};
+  });
+
+  cont.innerHTML = `
+    <div class="stat-kpis">
+      <div class="stat-kpi"><div class="l">Élèves inscrits</div><div class="v">${eleves.length}</div></div>
+      <div class="stat-kpi"><div class="l">Scolarités soldées</div><div class="v" style="color:var(--green)">${nbSoldes}/${eleves.length}</div></div>
+      <div class="stat-kpi"><div class="l">Total encaissé</div><div class="v">${totalPaye.toLocaleString()} F</div></div>
+      <div class="stat-kpi"><div class="l">Reste à percevoir</div><div class="v" style="color:${totalReste>0?'var(--red)':'var(--green)'}">${totalReste.toLocaleString()} F</div></div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-title">🎓 Taux de réussite par classe (moyenne annuelle ≥ 10)</div>
+      ${statsReussite.map(s=>`
+        <div class="stat-bar-row">
+          <span class="lbl">${nomNiveaux[s.niv]||s.niv}</span>
+          <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${s.pct||0}%;background:${s.pct!==null?couleurTaux(s.pct):'#ccc'}"></div></div>
+          <span class="val">${s.pct!==null?s.pct+'%':'—'}</span>
+        </div>`).join('')}
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-title">💸 Reste à payer par classe</div>
+      ${statsImpayes.map(s=>`
+        <div class="stat-bar-row">
+          <span class="lbl">${nomNiveaux[s.niv]||s.niv}</span>
+          <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${(s.reste/maxReste*100).toFixed(0)}%;background:${s.reste>0?'var(--red)':'var(--green)'}"></div></div>
+          <span class="val" style="width:auto;font-size:10.5px">${s.reste.toLocaleString()} F</span>
+        </div>`).join('')}
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-title">📈 Moyenne générale de l'école par trimestre</div>
+      ${statsTrimestres.map(s=>`
+        <div class="stat-bar-row">
+          <span class="lbl">Trimestre ${s.t}</span>
+          <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${s.moy!==null?(s.moy/20*100).toFixed(0):0}%;background:${s.moy!==null?couleurTaux(s.moy*5):'#ccc'}"></div></div>
+          <span class="val">${s.moy!==null?s.moy.toFixed(2)+'/20':'—'}</span>
+        </div>`).join('')}
+    </div>
+  `;
 }
 
 // ========== DONNÉES ==========
@@ -2100,6 +2247,25 @@ function niveauSuivant(niveauActuel){
 }
 
 function sauvegarder(){ if(window.sauvegarder) window.sauvegarder(); else localStorage.setItem('eleves', JSON.stringify(eleves)); }
+
+function exporterSauvegardeComplete(){
+  const sauvegarde = {
+    ecoleId: window.getEcoleId ? window.getEcoleId() : null,
+    dateExport: new Date().toISOString(),
+    anneeScolaire, nomDirecteur,
+    eleves, maitres, presences, notes, compositions, tarifs,
+    archives, emploiDuTemps, calendrier, cahierTexte, devoirs, livreCompte
+  };
+  const blob = new Blob([JSON.stringify(sauvegarde, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sauvegarde_echelon_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 function sauvegarderMaitres(){ if(window.sauvegarderMaitres) window.sauvegarderMaitres(); else localStorage.setItem('maitres', JSON.stringify(maitres)); }
 function sauvegarderCahierTexte(){ if(window.sauvegarderCahierTexte) window.sauvegarderCahierTexte(); else localStorage.setItem('cahierTexte', JSON.stringify(cahierTexte)); }
 function sauvegarderDevoirs(){ if(window.sauvegarderDevoirs) window.sauvegarderDevoirs(); else localStorage.setItem('devoirs', JSON.stringify(devoirs)); }
@@ -2118,7 +2284,7 @@ let rechercheCahierActive = '';
 function showTab(t){
   document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-  const idx = ['tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe'].indexOf(t);
+  const idx = ['tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe','statistiques'].indexOf(t);
   document.querySelectorAll('.tab')[idx].classList.add('active');
   document.getElementById('page-'+t).classList.add('active');
   if(t==='tableau') renderTableau();
@@ -2138,6 +2304,7 @@ function showTab(t){
   if(t==='edt') renderEdt();
   if(t==='calendrier') renderCalendrier();
   if(t==='equipe') renderEquipe();
+  if(t==='statistiques') renderStatistiques();
 }
 
 // ========== NIVEAUX SELECT ==========
@@ -2184,7 +2351,7 @@ function importerEleves(){
 
     const paiements = [{label:'Inscription',montant:inscription,payee: montantPayeSaisi>=inscription,obligatoire:true}];
     const paye = Math.min(montantPayeSaisi, tarif);
-    eleves.push({id:Date.now()+idx,nom,prenom,matricule,naissance,cycle,niveau,mode:'complet',tel,tarif,paiements,paye,historique:[]});
+    eleves.push({id:Date.now()+idx,nom,prenom,matricule,naissance,cycle,niveau,mode:'complet',tel,tarif,paiements,paye,historique:[],codeParent:genererCodeParent()});
     ajoutes++;
     if(paye>0){ avecPaiement++; totalPaye += paye; }
   });
@@ -2199,6 +2366,19 @@ function importerEleves(){
 }
 
 // ========== AJOUTER ÉLÈVE ==========
+function genererCodeParent(){
+  return String(Math.floor(1000 + Math.random()*9000)); // code à 4 chiffres
+}
+
+function regenererCodeParent(id){
+  const e = eleves.find(x=>x.id===id);
+  if(!e) return;
+  if(!confirm("Générer un nouveau code ? L'ancien code ne fonctionnera plus pour ce parent.")) return;
+  e.codeParent = genererCodeParent();
+  sauvegarder();
+  renderEleves();
+}
+
 function ajouterEleve(){
   const nom = document.getElementById('inp-nom').value.trim();
   const prenom = document.getElementById('inp-prenom').value.trim();
@@ -2225,7 +2405,7 @@ function ajouterEleve(){
     paiements.push({label:'3ème trimestre',montant:t3,payee:false,trimestre:'3'});
   }
 
-  eleves.push({id:Date.now(),nom,prenom,matricule,naissance,cycle,niveau,mode,tel,tarif,paiements,paye:0,historique:[]});
+  eleves.push({id:Date.now(),nom,prenom,matricule,naissance,cycle,niveau,mode,tel,tarif,paiements,paye:0,historique:[],codeParent:genererCodeParent()});
   sauvegarder();
   document.getElementById('inp-nom').value='';
   document.getElementById('inp-prenom').value='';
@@ -2275,7 +2455,10 @@ function renderEleves(){
         <div class="pay-row"><span class="pay-label">Date de naissance</span><span class="pay-val">${e.naissance||'—'}</span></div>
         <div class="pay-row"><span class="pay-label">Téléphone parent</span><span class="pay-val">${e.tel||'—'}</span></div>
         <div class="pay-row"><span class="pay-label">Cycle / Niveau</span><span class="pay-val">${e.cycle||'—'} • ${nomNiveaux[e.niveau]}</span></div>
-        <button class="btn btn-gray btn-full" style="font-size:12px;margin:8px 0 4px" onclick="ouvrirModifierEleve(${e.id})">✏️ Modifier ces informations</button>
+        <div class="pay-row"><span class="pay-label">🔑 Code parent</span><span class="pay-val" style="font-weight:700;letter-spacing:1px">${e.codeParent||'—'}</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">À communiquer au parent avec le matricule pour qu'il accède à l'espace parent en ligne.</div>
+        <button class="btn btn-gray btn-full" style="font-size:12px;margin-bottom:4px" onclick="regenererCodeParent(${e.id})">🔄 Générer un nouveau code</button>
+        <button class="btn btn-gray btn-full" style="font-size:12px;margin:0 0 4px" onclick="ouvrirModifierEleve(${e.id})">✏️ Modifier ces informations</button>
         <div class="sec-title" style="margin:14px 0 6px;font-size:12px">💰 Finances</div>
         <div class="pay-row"><span class="pay-label">Scolarité totale</span><span class="pay-val">${e.tarif.toLocaleString()} FCFA</span></div>
         <div class="pay-row"><span class="pay-label">Montant payé</span><span class="pay-val green">${e.paye.toLocaleString()} FCFA</span></div>
