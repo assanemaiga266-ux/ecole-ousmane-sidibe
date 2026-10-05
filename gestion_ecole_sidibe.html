@@ -274,10 +274,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
   <div class="tab" data-tab="calendrier" onclick="showTab('calendrier')">📅 Calendrier</div>
   <div class="tab" data-tab="equipe" onclick="showTab('equipe')">👥 Équipe</div>
   <div class="tab" data-tab="statistiques" onclick="showTab('statistiques')">📊 Statistiques</div>
+  <div class="tab" data-tab="retards" onclick="showTab('retards')">🔴 Retards</div>
+  <div class="tab" data-tab="journal" onclick="showTab('journal')">🧾 Journal</div>
 </div>
 
 <!-- PAGE TABLEAU DE BORD -->
 <div class="page active" id="page-tableau">
+  <div id="banner-rappel-auto"></div>
   <div class="stats-grid">
     <div class="stat-card blue"><div class="label">Total élèves</div><div class="value" id="stat-total">0</div></div>
     <div class="stat-card green"><div class="label">Totalement payé</div><div class="value" id="stat-ok">0</div></div>
@@ -377,6 +380,8 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
     <button class="filter-btn" onclick="setFiltre('partial',this)">⚠️ Partiel</button>
     <button class="filter-btn" onclick="setFiltre('zero',this)">❌ Non payé</button>
   </div>
+
+  <button class="btn btn-gray btn-full" style="margin-bottom:10px" onclick="imprimerCartesFiltrees()">🪪 Imprimer les cartes scolaires (liste affichée)</button>
 
   <div id="liste-eleves"></div>
 </div>
@@ -768,6 +773,13 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
   </div>
 
   <div class="form-box">
+    <div class="sec-title" style="margin-top:0">🔒 Clôture de caisse du jour</div>
+    <div class="pay-row"><span class="pay-label">Solde d'ouverture (aujourd'hui)</span><span class="pay-val" id="lc-solde-ouverture">0 FCFA</span></div>
+    <div style="font-size:11px;color:var(--muted);margin:6px 0 10px" id="note-cloture">La clôture fige les opérations du jour : elles ne pourront plus être supprimées.</div>
+    <button class="btn btn-blue btn-full" id="btn-cloturer" onclick="cloturerJournee()">🔒 Clôturer la journée</button>
+  </div>
+
+  <div class="form-box">
     <div class="sec-title" style="margin-top:0">Nouvelle opération</div>
     <div class="form-row">
       <div class="field"><label>Date</label><input type="date" id="lc-date"></div>
@@ -801,6 +813,11 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
     <button class="btn btn-blue" style="flex:1;justify-content:center" onclick="imprimerLivreCompte()">🖨️ Imprimer</button>
     <button class="wa-btn" style="margin-top:0;flex:1" onclick="partagerLivreComptePhoto()">📷 Envoyer en photo</button>
   </div>
+
+  <div class="sec-title" style="margin:18px 0 6px">📅 Historique des clôtures</div>
+  <div class="edt-scroll">
+    <div id="clotures-tableau"></div>
+  </div>
 </div>
 
 <!-- PAGE TARIFS -->
@@ -816,6 +833,21 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
       <label>Nom du Directeur (pour les bulletins)</label>
       <input type="text" id="nom-directeur" placeholder="TRAORE Abdoulaye">
     </div>
+  </div>
+
+  <div class="form-box">
+    <div class="sec-title" style="margin-top:0">🔔 Rappel automatique des impayés</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+      ⚠️ Comme l'app n'a pas de serveur dédié, ce rappel ne s'envoie pas tout seul en arrière-plan — il s'affiche automatiquement à l'ouverture de l'app, à partir du jour choisi chaque mois, pour te rappeler d'aller voir l'onglet Retards.
+    </div>
+    <div class="field">
+      <label>À partir de quel jour du mois ?</label>
+      <input type="number" id="jour-rappel-auto" min="1" max="28" placeholder="Ex: 5">
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px">
+      <input type="checkbox" id="rappel-auto-actif" style="width:18px;height:18px">
+      Activer ce rappel automatique
+    </label>
   </div>
 
   <div class="form-box" style="background:var(--gold-light);border-color:var(--gold)">
@@ -1509,6 +1541,14 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
 
   <button class="btn btn-green btn-full" onclick="validerPassages()">✅ Valider tous les passages cochés</button>
   <p id="passage-msg" style="text-align:center;font-size:12px;color:var(--green);margin-top:8px;display:none">✅ Passages effectués !</p>
+
+  <div class="form-box" style="background:#fff8ec;border-color:var(--gold);margin-top:18px">
+    <div class="sec-title" style="margin-top:0">🆕 Nouvelle année scolaire</div>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+      À utiliser <b>une seule fois</b>, une fois que le passage de <b>toutes les classes</b> a été validé ci-dessus. Archive l'année, efface les notes/présences pour repartir à zéro, et avance l'année scolaire (<span id="passage-annee-actuelle">—</span> → suivante).
+    </div>
+    <button class="btn btn-gold btn-full" onclick="demarrerNouvelleAnneeScolaire()">🆕 Démarrer une nouvelle année scolaire</button>
+  </div>
 </div>
 
 <!-- PAGE ARCHIVES -->
@@ -1526,6 +1566,15 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
       Télécharge un fichier contenant toutes les données de l'école (élèves, notes, finances, présences...). À garder en lieu sûr, ou à utiliser en cas de besoin de migration.
     </div>
     <button class="btn btn-blue btn-full" onclick="exporterSauvegardeComplete()">📥 Télécharger toutes les données</button>
+  </div>
+
+  <div class="form-box" style="background:#fff8ec;border-color:var(--gold)">
+    <div class="sec-title" style="margin-top:0">📤 Restaurer une sauvegarde</div>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+      ⚠️ Cette action <b>remplace toutes les données actuelles</b> de l'école par celles du fichier choisi. À utiliser uniquement en cas de besoin réel (erreur grave, migration).
+    </div>
+    <input type="file" id="input-restaurer" accept="application/json" style="display:none" onchange="restaurerSauvegarde(this.files[0])">
+    <button class="btn btn-gold btn-full" onclick="document.getElementById('input-restaurer').click()">📤 Choisir un fichier de sauvegarde</button>
   </div>
 
   <div id="liste-annees"></div>
@@ -1647,6 +1696,21 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
   <div id="stats-contenu"><div style="text-align:center;color:var(--muted);padding:20px 0">Chargement...</div></div>
 </div>
 
+<!-- PAGE RETARDS DE PAIEMENT -->
+<div class="page" id="page-retards">
+  <div id="retards-file-attente"></div>
+  <div id="retards-contenu"></div>
+</div>
+
+<!-- PAGE JOURNAL D'ACTIVITÉ -->
+<div class="page" id="page-journal">
+  <div class="form-box">
+    <div class="sec-title" style="margin-top:0">🧾 Journal d'activité</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Les 500 dernières actions, les plus récentes en premier.</div>
+    <div id="journal-contenu"></div>
+  </div>
+</div>
+
 <!-- MODAL AJOUT MEMBRE ÉQUIPE -->
 <div class="modal-overlay" id="modal-equipe">
   <div class="modal">
@@ -1690,6 +1754,13 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
     <div class="field"><label>N° Matricule</label><input type="text" id="me-matricule"></div>
     <div class="field"><label>Date de naissance</label><input type="text" id="me-naissance" placeholder="Ex: 12/03/2015"></div>
     <div class="field"><label>Téléphone parent</label><input type="text" id="me-tel" placeholder="Ex: 76123456"></div>
+    <div class="field">
+      <label>📷 Photo (pour la carte scolaire)</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="me-photo-apercu"></div>
+        <input type="file" accept="image/*" capture="environment" onchange="changerPhotoEleve(this)">
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-gray" style="flex:1" onclick="fermerModifierEleve()">Annuler</button>
       <button class="btn btn-green" style="flex:1" onclick="enregistrerModifierEleve()">Enregistrer</button>
@@ -1747,8 +1818,10 @@ setPersistence(auth, browserLocalPersistence); // reste connecté même après f
 // à partir du document users/{uid} lié au compte de la personne connectée.
 let ECOLE_ID = null;
 let USER_ROLE = null;
+let USER_NOM = null;
 window.getEcoleId = () => ECOLE_ID;
 window.getUserRole = () => USER_ROLE;
+window.getUserNom = () => USER_NOM;
 
 // Fonctions Firestore
 async function chargerDepuisFirestore(cle, defaut){
@@ -1765,6 +1838,52 @@ async function sauvegarderDansFirestore(cle, valeur){
     const docRef = doc(db, "ecoles", ECOLE_ID, "data", cle);
     await setDoc(docRef, { valeur });
   } catch(e){ console.error("Erreur sauvegarde", cle, e); }
+}
+
+// Les photos sont stockées UNE PAR DOCUMENT (sous-collection "photos"),
+// et non dans le même document que la liste des élèves.
+// Raison : un document Firestore est limité à 1 Mo. Avec 190 élèves,
+// mettre toutes les photos dans un seul document ("eleves") dépasserait
+// très vite cette limite. Un document par élève, lui, ne pose aucun problème.
+async function chargerToutesPhotos(){
+  try {
+    const snap = await getDocs(collection(db, "ecoles", ECOLE_ID, "photos"));
+    const map = {};
+    snap.forEach(d => { map[d.id] = d.data().photo; });
+    return map;
+  } catch(e){ console.error("Erreur chargement photos", e); return {}; }
+}
+
+// Réduit une photo (fichier choisi par l'utilisateur) à une petite image JPEG
+// avant stockage, pour rester largement sous la limite de 1 Mo par document Firestore.
+function compresserImage(fichier, maxLargeur, maxHauteur, qualite){
+  return new Promise((resolve, reject)=>{
+    const lecteur = new FileReader();
+    lecteur.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        const ratio = Math.min(maxLargeur/w, maxHauteur/h, 1);
+        w = Math.round(w*ratio); h = Math.round(h*ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', qualite));
+      };
+      img.onerror = () => reject(new Error("Image invalide"));
+      img.src = e.target.result;
+    };
+    lecteur.onerror = () => reject(new Error("Lecture du fichier impossible"));
+    lecteur.readAsDataURL(fichier);
+  });
+}
+
+async function sauvegarderPhotoEleve(eleveId, base64){
+  try {
+    const docRef = doc(db, "ecoles", ECOLE_ID, "photos", String(eleveId));
+    await setDoc(docRef, { photo: base64 });
+    photosEleves[String(eleveId)] = base64;
+  } catch(e){ console.error("Erreur sauvegarde photo", e); alert("⚠️ La photo n'a pas pu être enregistrée."); }
 }
 
 // Charger toutes les données depuis Firestore au démarrage
@@ -1787,6 +1906,11 @@ async function initialiserDonnees(){
   cahierTexte = await chargerDepuisFirestore('cahierTexte', []);
   devoirs = await chargerDepuisFirestore('devoirs', []);
   livreCompte = await chargerDepuisFirestore('livreCompte', []);
+  clotures = await chargerDepuisFirestore('clotures', []);
+  photosEleves = await chargerToutesPhotos();
+  journalActivite = await chargerDepuisFirestore('journalActivite', []);
+  parametresNotifications = await chargerDepuisFirestore('parametresNotifications', { jourRappel: 5, actif: false });
+  etatNotifications = await chargerDepuisFirestore('etatNotifications', { derniereAlerte: null });
 
   // Migration : s'assurer que chaque élève a un historique
   eleves.forEach(e=>{ if(!e.historique) e.historique = []; });
@@ -1813,16 +1937,20 @@ window.sauvegarderCalendrier = () => sauvegarderDansFirestore('calendrier', cale
 window.sauvegarderCahierTexte = () => sauvegarderDansFirestore('cahierTexte', cahierTexte);
 window.sauvegarderDevoirs = () => sauvegarderDansFirestore('devoirs', devoirs);
 window.sauvegarderLivreCompte = () => sauvegarderDansFirestore('livreCompte', livreCompte);
+window.sauvegarderClotures = () => sauvegarderDansFirestore('clotures', clotures);
+window.sauvegarderJournal = () => sauvegarderDansFirestore('journalActivite', journalActivite);
+window.sauvegarderParametresNotifications = () => sauvegarderDansFirestore('parametresNotifications', parametresNotifications);
+window.sauvegarderEtatNotifications = () => sauvegarderDansFirestore('etatNotifications', etatNotifications);
 
 // Cache selon le rôle : onglets invisibles pour certains rôles.
 // "admin" voit tout. Ajuster ces listes selon les besoins de chaque école.
-const TOUS_LES_ONGLETS = ['tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe','statistiques'];
+const TOUS_LES_ONGLETS = ['tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe','statistiques','retards','journal'];
 
 // On définit ce que CHAQUE rôle a le droit de voir, puis on déduit
 // automatiquement la liste des onglets à cacher pour ce rôle.
 const ONGLETS_AUTORISES = {
   prof: ['classes','presence','cahier','devoirs','notes','bulletins','edt'],
-  comptable: ['tableau','tarifs','livre','recus'],
+  comptable: ['tableau','tarifs','livre','recus','retards'],
   gestionnaire: TOUS_LES_ONGLETS.filter(o => o !== 'equipe')
   // admin : pas dans cette liste = accès à tout, y compris Équipe
 };
@@ -1871,10 +1999,12 @@ onAuthStateChanged(auth, async (user)=>{
       const profil = await chargerProfilUtilisateur(user.uid);
       ECOLE_ID = profil.ecoleId;
       USER_ROLE = profil.role || 'admin';
+      USER_NOM = profil.nom || user.email || 'Utilisateur';
       document.getElementById('login-screen').style.display='none';
       cacherOngletsRestreints();
       await initialiserDonnees();
       redirigerVersOngletParDefaut();
+      verifierRappelAutomatique();
     } catch(e){
       console.error(e);
       document.getElementById('login-error').textContent = e.message || "Erreur de chargement du profil.";
@@ -2036,6 +2166,7 @@ async function creerMembreEquipe(){
   btn.disabled = true; btn.textContent = 'Création...';
   try{
     await window._creerMembreEquipe(email, pass, nom, role);
+    journaliser('Création compte équipe', `${nom} (${LABELS_ROLE[role]||role})`);
     fermerModalEquipe();
     alert(`Compte créé ✅\n\nPartagez ces identifiants avec ${nom} :\nEmail : ${email}\nMot de passe : ${pass}`);
     renderEquipe();
@@ -2047,10 +2178,166 @@ async function creerMembreEquipe(){
   }
 }
 
+// ========== RETARDS DE PAIEMENT ==========
+let fileAttenteRetards = [];
+let indexFileRetards = 0;
+
+function messageRappelGenerique(e, reste){
+  let msg = `⚠️ *Rappel de paiement — École Ousmane Sidibé*\n\n`;
+  msg += `Cher(e) parent de *${e.prenom} ${e.nom}*,\n\n`;
+  msg += `Nous vous informons qu'il reste *${reste.toLocaleString()} FCFA* à régler sur la scolarité de votre enfant (${nomNiveaux[e.niveau]}).\n\n`;
+  msg += `Merci de bien vouloir régulariser la situation dans les meilleurs délais.\n`;
+  msg += `📞 Contact : 76 33 92 19 / 66 13 96 30 / 76 02 40 95\n`;
+  msg += `🏫 École Privée Ousmane Sidibé — N'tonasso, Koutiala`;
+  return msg;
+}
+
+function envoyerRappelRetard(eleveId){
+  const e = eleves.find(x=>x.id===eleveId);
+  if(!e) return;
+  const reste = Math.max(0, (e.tarif||0)-(e.paye||0));
+  if(reste<=0) return;
+  const tel = numeroWhatsApp(e.tel);
+  if(!tel || tel.replace('223','').length<8){
+    alert(`⚠️ Le numéro de téléphone du parent de ${e.prenom} ${e.nom} n'est pas renseigné ou invalide. Ajoute-le dans l'onglet Élèves.`);
+    return;
+  }
+  const url = `https://wa.me/${tel}?text=${encodeURIComponent(messageRappelGenerique(e, reste))}`;
+  window.open(url, '_blank');
+}
+
+// ========== RAPPEL AUTOMATIQUE (à l'ouverture de l'app) ==========
+// Pas de vrai envoi automatique en arrière-plan (ça demanderait un serveur dédié) :
+// on affiche juste un bandeau à l'ouverture de l'app, une seule fois par mois,
+// à partir du jour configuré, pour les rôles qui gèrent les finances.
+function verifierRappelAutomatique(){
+  if(!parametresNotifications || !parametresNotifications.actif) return;
+  const role = window.getUserRole ? window.getUserRole() : null;
+  if(!['admin','gestionnaire','comptable'].includes(role)) return;
+
+  const aujourdhui = new Date();
+  const jourDuMois = aujourdhui.getDate();
+  if(jourDuMois < (parametresNotifications.jourRappel || 5)) return;
+
+  const moisActuel = `${aujourdhui.getFullYear()}-${String(aujourdhui.getMonth()+1).padStart(2,'0')}`;
+  if(etatNotifications && etatNotifications.derniereAlerte === moisActuel) return; // déjà vu ce mois-ci
+
+  const enRetard = eleves.filter(e=>((e.tarif||0)-(e.paye||0))>0);
+  if(!enRetard.length) return;
+
+  const banner = document.getElementById('banner-rappel-auto');
+  if(!banner) return;
+  banner.innerHTML = `
+    <div class="stat-card" style="border-color:var(--gold);background:var(--gold-light);margin-bottom:12px">
+      <div style="font-size:13px;line-height:1.6">
+        🔔 <b>Rappel du ${parametresNotifications.jourRappel} du mois</b><br>
+        ${enRetard.length} élève(s) ont un paiement en retard.
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-gold" style="flex:1;font-size:12px" onclick="showTab('retards');document.getElementById('banner-rappel-auto').innerHTML=''">Voir les retards</button>
+        <button class="btn btn-gray" style="flex:1;font-size:12px" onclick="masquerRappelAutomatique()">Masquer ce mois-ci</button>
+      </div>
+    </div>`;
+}
+
+function masquerRappelAutomatique(){
+  const aujourdhui = new Date();
+  etatNotifications = { derniereAlerte: `${aujourdhui.getFullYear()}-${String(aujourdhui.getMonth()+1).padStart(2,'0')}` };
+  if(window.sauvegarderEtatNotifications) window.sauvegarderEtatNotifications();
+  document.getElementById('banner-rappel-auto').innerHTML = '';
+}
+
+function renderRetards(){
+  const cont = document.getElementById('retards-contenu');
+  const enRetard = eleves
+    .map(e=>({e, reste: Math.max(0,(e.tarif||0)-(e.paye||0))}))
+    .filter(x=>x.reste>0)
+    .sort((a,b)=>b.reste-a.reste);
+
+  document.getElementById('retards-file-attente').innerHTML = '';
+
+  if(!enRetard.length){
+    cont.innerHTML = '<div class="stat-card" style="text-align:center;color:var(--green)">🎉 Aucun retard de paiement — tout est à jour !</div>';
+    return;
+  }
+
+  const totalReste = enRetard.reduce((s,x)=>s+x.reste,0);
+
+  cont.innerHTML = `
+    <div class="stat-kpis" style="grid-template-columns:1fr 1fr">
+      <div class="stat-kpi"><div class="l">Élèves en retard</div><div class="v" style="color:var(--red)">${enRetard.length}</div></div>
+      <div class="stat-kpi"><div class="l">Total à percevoir</div><div class="v" style="color:var(--red)">${totalReste.toLocaleString()} F</div></div>
+    </div>
+    <button class="btn btn-blue btn-full" style="margin-bottom:12px" onclick="demarrerEnvoiGroupeRetards()">📨 Envoyer les rappels un par un (${enRetard.length})</button>
+    ${enRetard.map(x=>`
+      <div class="eleve-card">
+        <div class="eleve-header">
+          <div>
+            <div class="eleve-nom">${x.e.prenom} ${x.e.nom}</div>
+            <div class="eleve-niveau">${nomNiveaux[x.e.niveau]}</div>
+          </div>
+          <span class="badge badge-zero">❌ ${x.reste.toLocaleString()} FCFA</span>
+        </div>
+        <div class="eleve-body open" style="padding-top:0">
+          <button class="wa-btn" style="margin-top:0" onclick="envoyerRappelRetard(${x.e.id})">📲 Envoyer un rappel WhatsApp</button>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
+// Envoi groupé : WhatsApp/les navigateurs ne permettent pas d'ouvrir plusieurs
+// conversations à la fois automatiquement, donc on avance élève par élève,
+// avec un clic pour passer au suivant une fois le message envoyé.
+function demarrerEnvoiGroupeRetards(){
+  fileAttenteRetards = eleves
+    .map(e=>({e, reste: Math.max(0,(e.tarif||0)-(e.paye||0))}))
+    .filter(x=>x.reste>0)
+    .sort((a,b)=>b.reste-a.reste);
+  indexFileRetards = 0;
+  avancerFileRetards();
+}
+
+function avancerFileRetards(){
+  const zone = document.getElementById('retards-file-attente');
+  if(indexFileRetards >= fileAttenteRetards.length){
+    zone.innerHTML = `<div class="stat-card" style="text-align:center;color:var(--green)">✅ Envoi terminé (${fileAttenteRetards.length} rappel(s) traité(s)).</div>`;
+    fileAttenteRetards = [];
+    return;
+  }
+  const {e, reste} = fileAttenteRetards[indexFileRetards];
+  zone.innerHTML = `
+    <div class="stat-card" style="border-color:var(--blue)">
+      <div class="stat-card-title">📨 Envoi groupé — ${indexFileRetards+1}/${fileAttenteRetards.length}</div>
+      <div style="font-size:13px;margin-bottom:10px">
+        <b>${e.prenom} ${e.nom}</b> (${nomNiveaux[e.niveau]}) — Reste : <b style="color:var(--red)">${reste.toLocaleString()} FCFA</b>
+      </div>
+      <button class="wa-btn" style="margin-top:0" onclick="envoyerEtAvancerRetard(${e.id})">📲 Envoyer à cet élève, puis suivant</button>
+      <button class="btn btn-gray btn-full" style="margin-top:8px;font-size:12px" onclick="passerRetard()">⏭️ Passer sans envoyer</button>
+      <button class="btn btn-gray btn-full" style="margin-top:6px;font-size:12px" onclick="arreterFileRetards()">✖ Arrêter l'envoi groupé</button>
+    </div>
+  `;
+}
+
+function envoyerEtAvancerRetard(eleveId){
+  envoyerRappelRetard(eleveId);
+  indexFileRetards++;
+  avancerFileRetards();
+}
+function passerRetard(){
+  indexFileRetards++;
+  avancerFileRetards();
+}
+function arreterFileRetards(){
+  fileAttenteRetards = [];
+  document.getElementById('retards-file-attente').innerHTML = '';
+}
+
 async function retirerMembreEquipe(uid, nom){
   if(!confirm(`Retirer l'accès de ${nom} ? La personne ne pourra plus se connecter à l'app (le compte de connexion doit être supprimé séparément dans Firebase si besoin).`)) return;
   try{
     await window._retirerAccesMembre(uid);
+    journaliser('Retrait accès équipe', nom);
     renderEquipe();
   } catch(e){
     alert("Erreur : " + (e.message || e));
@@ -2159,6 +2446,9 @@ let notes = [];
 let compositions = [];
 let tarifs = {};
 let archives = [];
+let journalActivite = [];
+let parametresNotifications = { jourRappel: 5, actif: false };
+let etatNotifications = { derniereAlerte: null };
 let anneeScolaire = '2025-2026';
 let nomDirecteur = '';
 let emploiDuTemps = [];
@@ -2166,6 +2456,8 @@ let calendrier = [];
 let cahierTexte = [];
 let devoirs = [];
 let livreCompte = [];
+let clotures = [];
+let photosEleves = {};
 let filtreActif = 'tous';
 let rechercheActive = '';
 
@@ -2254,7 +2546,8 @@ function exporterSauvegardeComplete(){
     dateExport: new Date().toISOString(),
     anneeScolaire, nomDirecteur,
     eleves, maitres, presences, notes, compositions, tarifs,
-    archives, emploiDuTemps, calendrier, cahierTexte, devoirs, livreCompte
+    archives, emploiDuTemps, calendrier, cahierTexte, devoirs, livreCompte,
+    clotures, photosEleves
   };
   const blob = new Blob([JSON.stringify(sauvegarde, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -2266,10 +2559,75 @@ function exporterSauvegardeComplete(){
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+function restaurerSauvegarde(fichier){
+  if(!fichier) return;
+  const lecteur = new FileReader();
+  lecteur.onload = function(e){
+    let data;
+    try{ data = JSON.parse(e.target.result); }
+    catch(err){ alert("⚠️ Ce fichier n'est pas une sauvegarde valide (JSON illisible)."); return; }
+
+    if(!data.eleves){
+      alert("⚠️ Ce fichier ne ressemble pas à une sauvegarde Échelon valide (données élèves manquantes).");
+      return;
+    }
+
+    const nbElevesActuels = eleves.length;
+    const nbElevesFichier = (data.eleves||[]).length;
+    const confirmation = confirm(
+      `⚠️ ATTENTION — Action irréversible\n\n`+
+      `Tu es sur le point de remplacer TOUTES les données actuelles par celles du fichier :\n\n`+
+      `Actuellement : ${nbElevesActuels} élève(s)\n`+
+      `Dans le fichier : ${nbElevesFichier} élève(s)\n`+
+      `Date de la sauvegarde : ${data.dateExport ? new Date(data.dateExport).toLocaleString('fr-FR') : 'inconnue'}\n\n`+
+      `Continuer et écraser les données actuelles ?`
+    );
+    if(!confirmation) return;
+
+    eleves = data.eleves || [];
+    maitres = data.maitres || [];
+    presences = data.presences || [];
+    notes = data.notes || [];
+    compositions = data.compositions || [];
+    tarifs = data.tarifs || {};
+    archives = data.archives || [];
+    anneeScolaire = data.anneeScolaire || anneeScolaire;
+    nomDirecteur = data.nomDirecteur || nomDirecteur;
+    emploiDuTemps = data.emploiDuTemps || [];
+    calendrier = data.calendrier || [];
+    cahierTexte = data.cahierTexte || [];
+    devoirs = data.devoirs || [];
+    livreCompte = data.livreCompte || [];
+    clotures = data.clotures || [];
+    photosEleves = data.photosEleves || {};
+
+    sauvegarder();
+    sauvegarderMaitres();
+    sauvegarderPresences();
+    sauvegarderNotes();
+    sauvegarderCompositions();
+    if(window.sauvegarderTarifsFirestore) window.sauvegarderTarifsFirestore();
+    if(window.sauvegarderArchives) window.sauvegarderArchives();
+    if(window.sauvegarderAnneeScolaire) window.sauvegarderAnneeScolaire();
+    if(window.sauvegarderNomDirecteur) window.sauvegarderNomDirecteur();
+    journaliser('Restauration sauvegarde', `${nbElevesFichier} élève(s) restauré(s) depuis un fichier du ${data.dateExport ? new Date(data.dateExport).toLocaleDateString('fr-FR') : 'inconnu'}`);
+    sauvegarderEmploiDuTemps();
+    sauvegarderCalendrier();
+    sauvegarderCahierTexte();
+    sauvegarderDevoirs();
+    sauvegarderLivreCompte();
+
+    alert("✅ Sauvegarde restaurée avec succès. La page va se recharger.");
+    location.reload();
+  };
+  lecteur.readAsText(fichier);
+}
 function sauvegarderMaitres(){ if(window.sauvegarderMaitres) window.sauvegarderMaitres(); else localStorage.setItem('maitres', JSON.stringify(maitres)); }
 function sauvegarderCahierTexte(){ if(window.sauvegarderCahierTexte) window.sauvegarderCahierTexte(); else localStorage.setItem('cahierTexte', JSON.stringify(cahierTexte)); }
 function sauvegarderDevoirs(){ if(window.sauvegarderDevoirs) window.sauvegarderDevoirs(); else localStorage.setItem('devoirs', JSON.stringify(devoirs)); }
 function sauvegarderLivreCompte(){ if(window.sauvegarderLivreCompte) window.sauvegarderLivreCompte(); else localStorage.setItem('livreCompte', JSON.stringify(livreCompte)); }
+function sauvegarderClotures(){ if(window.sauvegarderClotures) window.sauvegarderClotures(); else localStorage.setItem('clotures', JSON.stringify(clotures)); }
 function sauvegarderPresences(){ if(window.sauvegarderPresences) window.sauvegarderPresences(); else localStorage.setItem('presences', JSON.stringify(presences)); }
 function sauvegarderNotes(){ if(window.sauvegarderNotes) window.sauvegarderNotes(); else localStorage.setItem('notes', JSON.stringify(notes)); }
 function sauvegarderCompositions(){ if(window.sauvegarderCompositions) window.sauvegarderCompositions(); else localStorage.setItem('compositions', JSON.stringify(compositions)); }
@@ -2284,7 +2642,7 @@ let rechercheCahierActive = '';
 function showTab(t){
   document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-  const idx = ['tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe','statistiques'].indexOf(t);
+  const idx = ['tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe','statistiques','retards','journal'].indexOf(t);
   document.querySelectorAll('.tab')[idx].classList.add('active');
   document.getElementById('page-'+t).classList.add('active');
   if(t==='tableau') renderTableau();
@@ -2305,6 +2663,8 @@ function showTab(t){
   if(t==='calendrier') renderCalendrier();
   if(t==='equipe') renderEquipe();
   if(t==='statistiques') renderStatistiques();
+  if(t==='retards') renderRetards();
+  if(t==='journal') renderJournal();
 }
 
 // ========== NIVEAUX SELECT ==========
@@ -2407,6 +2767,7 @@ function ajouterEleve(){
 
   eleves.push({id:Date.now(),nom,prenom,matricule,naissance,cycle,niveau,mode,tel,tarif,paiements,paye:0,historique:[],codeParent:genererCodeParent()});
   sauvegarder();
+  journaliser('Ajout élève', `${prenom} ${nom} (${nomNiveaux[niveau]||niveau})`);
   document.getElementById('inp-nom').value='';
   document.getElementById('inp-prenom').value='';
   document.getElementById('inp-matricule').value='';
@@ -2443,9 +2804,12 @@ function renderEleves(){
     return `
     <div class="eleve-card">
       <div class="eleve-header" onclick="toggleEleve(${e.id})">
-        <div>
-          <div class="eleve-nom">${e.prenom} ${e.nom}</div>
-          <div class="eleve-niveau">${nomNiveaux[e.niveau]}${e.matricule?' • N° '+e.matricule:''}</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${photosEleves[String(e.id)] ? `<img src="${photosEleves[String(e.id)]}" style="width:34px;height:34px;object-fit:cover;border-radius:50%;border:1px solid var(--border)">` : ''}
+          <div>
+            <div class="eleve-nom">${e.prenom} ${e.nom}</div>
+            <div class="eleve-niveau">${nomNiveaux[e.niveau]}${e.matricule?' • N° '+e.matricule:''}</div>
+          </div>
         </div>
         <span class="badge ${badgeClass}">${badgeText}</span>
       </div>
@@ -2469,6 +2833,7 @@ function renderEleves(){
         <div class="actions-eleve">
           <button class="btn btn-gold" style="flex:1;font-size:12px" onclick="ouvrirModal(${e.id})">💳 Enregistrer paiement</button>
           <button class="btn btn-blue" style="font-size:12px" onclick="genererRecu(${e.id})">🧾 Reçu total</button>
+          <button class="btn btn-gray" style="font-size:12px" onclick="genererCarteScolaire(${e.id})">🪪 Carte</button>
           <button class="btn btn-red" style="font-size:12px" onclick="supprimerEleve(${e.id})">🗑</button>
         </div>
         ${e.mode==='trimestres'&&getReste(e)>0?`
@@ -2548,8 +2913,27 @@ function ouvrirModifierEleve(id){
   document.getElementById('me-matricule').value = e.matricule||'';
   document.getElementById('me-naissance').value = e.naissance||'';
   document.getElementById('me-tel').value = e.tel||'';
+  const photoActuelle = photosEleves[String(id)];
+  const apercu = document.getElementById('me-photo-apercu');
+  if(apercu) apercu.innerHTML = photoActuelle ? `<img src="${photoActuelle}" style="width:80px;height:100px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">` : '<span style="color:var(--muted);font-size:12px">Aucune photo</span>';
   document.getElementById('modal-modif-eleve').classList.add('open');
 }
+async function changerPhotoEleve(input){
+  const fichier = input.files[0];
+  if(!fichier || !eleveEnModificationId) return;
+  const apercu = document.getElementById('me-photo-apercu');
+  if(apercu) apercu.textContent = '⏳ Compression de la photo...';
+  try {
+    const base64 = await compresserImage(fichier, 240, 300, 0.6);
+    await sauvegarderPhotoEleve(eleveEnModificationId, base64);
+    if(apercu) apercu.innerHTML = `<img src="${base64}" style="width:80px;height:100px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">`;
+    renderEleves();
+  } catch(e){
+    console.error(e);
+    if(apercu) apercu.textContent = '⚠️ Photo illisible, réessayez.';
+  }
+}
+
 function fermerModifierEleve(){
   document.getElementById('modal-modif-eleve').classList.remove('open');
   eleveEnModificationId = null;
@@ -2572,6 +2956,93 @@ function enregistrerModifierEleve(){
 
 function dateAuj(){
   return new Date().toLocaleDateString('fr-FR');
+}
+
+// ========== CARTES SCOLAIRES ==========
+function htmlCarteScolaire(e){
+  const photo = photosEleves[String(e.id)];
+  return `
+  <div style="width:300px;height:190px;border-radius:10px;border:2px solid var(--blue,#2563eb);padding:12px;box-sizing:border-box;font-family:sans-serif;position:relative;background:linear-gradient(135deg,#f0f6ff,#ffffff);page-break-inside:avoid">
+    <div style="text-align:center;font-weight:700;color:var(--blue,#2563eb);font-size:11px;margin-bottom:6px">🏫 ÉCOLE PRIVÉE OUSMANE SIDIBÉ</div>
+    <div style="text-align:center;font-size:9px;color:#666;margin-bottom:8px">CARTE SCOLAIRE — ${anneeScolaire||''}</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      ${photo
+        ? `<img src="${photo}" style="width:70px;height:88px;object-fit:cover;border-radius:4px;border:1px solid #ccc">`
+        : `<div style="width:70px;height:88px;border-radius:4px;border:1px dashed #999;display:flex;align-items:center;justify-content:center;font-size:9px;color:#999;text-align:center">Pas de photo</div>`}
+      <div style="font-size:11px;line-height:1.6">
+        <div style="font-weight:700;font-size:13px">${e.prenom} ${e.nom}</div>
+        <div>Classe : <b>${nomNiveaux[e.niveau]||''}</b></div>
+        <div>Matricule : <b>${e.matricule||'—'}</b></div>
+        <div>Naissance : ${e.naissance||'—'}</div>
+      </div>
+    </div>
+    <div style="position:absolute;bottom:8px;left:12px;right:12px;font-size:8px;color:#888;text-align:center;border-top:1px solid #ddd;padding-top:4px">N'tonasso, Koutiala — 76 33 92 19</div>
+  </div>`;
+}
+
+function genererCarteScolaire(id){
+  const e = eleves.find(x=>x.id===id);
+  if(!e) return;
+  const fenetre = window.open('', '_blank');
+  fenetre.document.write(`<html><head><title>Carte scolaire — ${e.prenom} ${e.nom}</title>
+    <style>body{display:flex;justify-content:center;padding:30px;font-family:sans-serif}</style>
+    </head><body>${htmlCarteScolaire(e)}</body></html>`);
+  fenetre.document.close();
+  setTimeout(()=>fenetre.print(), 300);
+}
+
+function imprimerCartesFiltrees(){
+  const q = rechercheActive.toLowerCase();
+  const liste = eleves.filter(e=>{
+    const match = (e.nom+' '+e.prenom).toLowerCase().includes(q)||(e.prenom+' '+e.nom).toLowerCase().includes(q);
+    if(!match) return false;
+    if(filtreActif==='tous') return true;
+    return getStatut(e)===filtreActif;
+  });
+  if(!liste.length){ alert('Aucun élève à imprimer avec les filtres actuels.'); return; }
+  const fenetre = window.open('', '_blank');
+  fenetre.document.write(`<html><head><title>Cartes scolaires</title>
+    <style>body{display:flex;flex-wrap:wrap;gap:14px;padding:20px;font-family:sans-serif}</style>
+    </head><body>${liste.map(htmlCarteScolaire).join('')}</body></html>`);
+  fenetre.document.close();
+  setTimeout(()=>fenetre.print(), 400);
+}
+
+// ========== JOURNAL D'ACTIVITÉ ==========
+// Trace qui a fait quoi, pour pouvoir retrouver l'origine d'une erreur
+// quand plusieurs comptes (prof, comptable, gestionnaire) utilisent l'app.
+function journaliser(action, details){
+  journalActivite.unshift({
+    date: new Date().toISOString(),
+    utilisateur: (window.getUserNom && window.getUserNom()) || 'Inconnu',
+    role: (window.getUserRole && window.getUserRole()) || '—',
+    action,
+    details: details || ''
+  });
+  // On garde un historique raisonnable pour ne pas alourdir la base
+  if(journalActivite.length > 500) journalActivite = journalActivite.slice(0, 500);
+  if(window.sauvegarderJournal) window.sauvegarderJournal();
+}
+
+function renderJournal(){
+  const cont = document.getElementById('journal-contenu');
+  if(!cont) return;
+  if(!journalActivite.length){
+    cont.innerHTML = '<div class="empty">Aucune activité enregistrée pour le moment.</div>';
+    return;
+  }
+  cont.innerHTML = journalActivite.map(j=>{
+    const d = new Date(j.date);
+    const dateAffichee = isNaN(d) ? j.date : d.toLocaleString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `
+    <div style="padding:9px 0;border-bottom:1px solid var(--border);font-size:12.5px">
+      <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-bottom:2px">
+        <span>${dateAffichee}</span>
+        <span>${j.utilisateur} (${j.role})</span>
+      </div>
+      <div><b>${j.action}</b>${j.details?' — '+j.details:''}</div>
+    </div>`;
+  }).join('');
 }
 
 function toggleTranche(eleveId, idx){
@@ -2599,14 +3070,17 @@ function ajouterPaiement(id){
   e.paye = Math.min(e.tarif, e.paye+montant);
   e.historique.push({date:dateAuj(),montant:montant});
   sauvegarder();
+  journaliser('Paiement enregistré', `${e.prenom} ${e.nom} — ${montant.toLocaleString()} FCFA`);
   renderEleves();
   document.getElementById('body-'+id).classList.add('open');
 }
 
 function supprimerEleve(id){
   if(!confirm('Supprimer cet élève ?')) return;
+  const e = eleves.find(x=>x.id===id);
   eleves = eleves.filter(e=>e.id!==id);
   sauvegarder();
+  if(e) journaliser('Suppression élève', `${e.prenom} ${e.nom}`);
   renderEleves();
   renderTableau();
 }
@@ -2641,6 +3115,7 @@ function validerModalPaiement(id){
   e.paye = Math.min(e.tarif, e.paye+montant);
   e.historique.push({date:dateAuj(),montant:montant});
   sauvegarder();
+  journaliser('Paiement enregistré', `${e.prenom} ${e.nom} — ${montant.toLocaleString()} FCFA`);
   fermerModal();
   renderEleves();
   renderTableau();
@@ -3449,7 +3924,7 @@ function ajouterOperationLivre(){
   if(!details || !montant){ alert('Veuillez indiquer les détails et le montant.'); return; }
   const date = dateInp ? new Date(dateInp).toLocaleDateString('fr-FR') : dateAuj();
 
-  livreCompte.push({ id: Date.now(), date, type, details, montant, dateTri: dateInp || new Date().toISOString().split('T')[0] });
+  livreCompte.push({ id: Date.now(), date, type, details, montant, dateTri: dateInp || new Date().toISOString().split('T')[0], clotureId: null });
   sauvegarderLivreCompte();
   document.getElementById('lc-details').value='';
   document.getElementById('lc-montant').value='';
@@ -3458,10 +3933,72 @@ function ajouterOperationLivre(){
 }
 
 function supprimerOperationLivre(id){
+  const op = livreCompte.find(o=>o.id===id);
+  if(op && op.clotureId){ alert("⚠️ Cette opération appartient à une journée déjà clôturée et ne peut plus être supprimée."); return; }
   if(!confirm('Supprimer cette opération ?')) return;
   livreCompte = livreCompte.filter(o=>o.id!==id);
   sauvegarderLivreCompte();
   renderLivreCompte();
+}
+
+// ========== CLÔTURE DE CAISSE ==========
+function soldeOuvertureDuJour(){
+  if(!clotures.length) return 0;
+  const triees = [...clotures].sort((a,b)=>a.date.localeCompare(b.date));
+  return triees[triees.length-1].soldeFermeture;
+}
+
+function cloturerJournee(){
+  const dateJour = new Date().toISOString().split('T')[0];
+  if(clotures.find(c=>c.date===dateJour)){
+    alert("La journée d'aujourd'hui est déjà clôturée.");
+    return;
+  }
+  const operationsDuJour = livreCompte.filter(o => o.dateTri === dateJour && !o.clotureId);
+  if(!operationsDuJour.length){
+    if(!confirm("Aucune opération non clôturée aujourd'hui. Clôturer quand même (solde inchangé) ?")) return;
+  }
+  const soldeOuverture = soldeOuvertureDuJour();
+  const totalRecettes = operationsDuJour.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
+  const totalDepenses = operationsDuJour.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
+  const soldeFermeture = soldeOuverture + totalRecettes - totalDepenses;
+  const clotureId = Date.now();
+
+  operationsDuJour.forEach(o => o.clotureId = clotureId);
+  clotures.push({
+    id: clotureId,
+    date: dateJour,
+    dateAffichage: new Date().toLocaleDateString('fr-FR'),
+    heure: new Date().toLocaleTimeString('fr-FR'),
+    soldeOuverture, totalRecettes, totalDepenses, soldeFermeture
+  });
+
+  sauvegarderLivreCompte();
+  sauvegarderClotures();
+  journaliser('Clôture de caisse', `${dateJour} — Solde de clôture : ${soldeFermeture.toLocaleString()} FCFA`);
+  renderLivreCompte();
+
+  alert(`✅ Journée clôturée.\n\nOuverture : ${soldeOuverture.toLocaleString()} FCFA\nRecettes : ${totalRecettes.toLocaleString()} FCFA\nDépenses : ${totalDepenses.toLocaleString()} FCFA\nSolde de clôture : ${soldeFermeture.toLocaleString()} FCFA`);
+}
+
+function renderClotures(){
+  const cont = document.getElementById('clotures-tableau');
+  if(!cont) return;
+  if(!clotures.length){ cont.innerHTML = '<div class="empty">Aucune clôture enregistrée pour le moment.</div>'; return; }
+  const triees = [...clotures].sort((a,b)=> b.date.localeCompare(a.date));
+  cont.innerHTML = `<table class="edt-grid" style="min-width:560px">
+    <thead><tr><th>Date</th><th>Ouverture</th><th>Recettes</th><th>Dépenses</th><th>Clôture</th></tr></thead>
+    <tbody>
+    ${triees.map(c=>`
+      <tr>
+        <td class="heure-col">${c.dateAffichage}</td>
+        <td>${c.soldeOuverture.toLocaleString()}</td>
+        <td style="color:var(--green);font-weight:600">${c.totalRecettes.toLocaleString()}</td>
+        <td style="color:var(--red);font-weight:600">${c.totalDepenses.toLocaleString()}</td>
+        <td style="font-weight:700">${c.soldeFermeture.toLocaleString()}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
 }
 
 function filtrerLivreCompte(q){ rechercheLivreActive=q; renderLivreCompte(); }
@@ -3484,6 +4021,16 @@ function renderLivreCompte(){
   document.getElementById('lc-total-recettes').textContent = totalRecettes.toLocaleString()+' FCFA';
   document.getElementById('lc-total-depenses').textContent = totalDepenses.toLocaleString()+' FCFA';
   document.getElementById('lc-solde-actuel').textContent = (totalRecettes-totalDepenses).toLocaleString()+' FCFA';
+
+  const dateJour = new Date().toISOString().split('T')[0];
+  const dejaClotureAuj = clotures.find(c=>c.date===dateJour);
+  const elOuverture = document.getElementById('lc-solde-ouverture');
+  if(elOuverture) elOuverture.textContent = soldeOuvertureDuJour().toLocaleString()+' FCFA';
+  const btnCloture = document.getElementById('btn-cloturer');
+  if(btnCloture) btnCloture.disabled = !!dejaClotureAuj;
+  const noteCloture = document.getElementById('note-cloture');
+  if(noteCloture) noteCloture.textContent = dejaClotureAuj ? "✅ La journée d'aujourd'hui est déjà clôturée." : "La clôture fige les opérations du jour : elles ne pourront plus être supprimées.";
+  renderClotures();
 
   // Affichage : plus récent en premier, mais avec le solde cumulé calculé chronologiquement
   const q = rechercheLivreActive.toLowerCase();
@@ -3508,7 +4055,7 @@ function renderLivreCompte(){
           <td style="color:var(--green);font-weight:600">${o.type==='recette'?o.montant.toLocaleString():''}</td>
           <td style="color:var(--red);font-weight:600">${o.type==='depense'?o.montant.toLocaleString():''}</td>
           <td style="font-weight:700">${o.soldeCumule.toLocaleString()}</td>
-          <td><button class="btn btn-red" style="font-size:10px;padding:3px 6px" onclick="supprimerOperationLivre(${o.id})">🗑</button></td>
+          <td>${o.clotureId ? '<span title="Journée clôturée" style="font-size:13px">🔒</span>' : `<button class="btn btn-red" style="font-size:10px;padding:3px 6px" onclick="supprimerOperationLivre(${o.id})">🗑</button>`}</td>
         </tr>`).join('')}
       </tbody>
     </table>
@@ -3562,6 +4109,7 @@ function ajouterNote(){
   document.getElementById('n-note').value='';
   renderNotes();
   const e = eleves.find(x=>x.id===eleveId);
+  journaliser('Note ajoutée', `${e.prenom} ${e.nom} — ${matiere} : ${note}/20`);
   alert(`✅ Devoir de ${note}/20 enregistré pour ${e.prenom} ${e.nom} en ${matiere}`);
 }
 
@@ -4222,6 +4770,8 @@ let recherchePassageActive = '';
 function filtrerPassage(q){ recherchePassageActive=q; renderPassage(); }
 
 function renderPassage(){
+  const spanAnnee = document.getElementById('passage-annee-actuelle');
+  if(spanAnnee) spanAnnee.textContent = anneeScolaire || '—';
   const cont = document.getElementById('liste-passage');
   let liste = eleves.filter(e=>{
     const q = recherchePassageActive.toLowerCase();
@@ -4291,6 +4841,9 @@ function archiverAnnee(){
   if(window.sauvegarderArchives) window.sauvegarderArchives();
 }
 
+// Étape 1 : fait passer les élèves cochés à la classe supérieure (niveau, tarif, paiements
+// remis à zéro pour EUX uniquement). Peut être répétée classe par classe, sans danger,
+// autant de fois que nécessaire — elle NE touche PAS les notes/présences des autres élèves.
 function validerPassages(){
   const aCocher = eleves.filter(e=>{
     const chk = document.getElementById('chk-passage-'+e.id);
@@ -4298,9 +4851,7 @@ function validerPassages(){
   });
   if(!aCocher.length){ alert('Aucun élève coché pour le passage.'); return; }
 
-  if(!confirm(`Confirmer le passage de ${aCocher.length} élève(s) en classe supérieure ?\n\nLeurs notes, présences et paiements de cette année seront archivés et remis à zéro pour la nouvelle année.`)) return;
-
-  archiverAnnee();
+  if(!confirm(`Confirmer le passage de ${aCocher.length} élève(s) en classe supérieure ?\n\nLeur niveau et leurs paiements seront mis à jour pour la nouvelle année. Tu peux faire ça classe par classe, sans risque pour les autres élèves.`)) return;
 
   aCocher.forEach(e=>{
     const suivant = niveauSuivant(e.niveau);
@@ -4313,7 +4864,7 @@ function validerPassages(){
       e.niveau = nouveauNiveau;
       e.cycle = cycleDuNiveau[nouveauNiveau] || e.cycle;
     }
-    // Remise à zéro pour la nouvelle année
+    // Remise à zéro des paiements pour la nouvelle année (pour cet élève uniquement)
     e.tarif = tarifs[e.niveau] || 0;
     e.paye = 0;
     e.historique = [];
@@ -4327,21 +4878,60 @@ function validerPassages(){
     }
   });
 
-  // Retirer les élèves ayant fini le Bac de la liste active (ils restent dans l'archive)
-  eleves = eleves.filter(e=>e.niveau!=='diplome_bac');
-
-  // Nettoyer notes et présences de l'année précédente (déjà archivées)
-  notes = [];
-  presences = [];
-
   sauvegarder();
-  sauvegarderNotes();
-  sauvegarderPresences();
+  journaliser('Passage validé', `${aCocher.length} élève(s)`);
 
   document.getElementById('passage-msg').style.display='block';
   setTimeout(()=>document.getElementById('passage-msg').style.display='none', 3000);
   renderPassage();
-  alert(`✅ ${aCocher.length} élève(s) passé(s) en classe supérieure. Nouvelle année scolaire prête !`);
+  alert(`✅ ${aCocher.length} élève(s) passé(s) en classe supérieure.\n\nUne fois TOUTES les classes traitées, utilise le bouton "🆕 Démarrer une nouvelle année scolaire" pour finaliser (archivage, remise à zéro des notes).`);
+}
+
+// Incrémente "2025-2026" → "2026-2027". Si le format n'est pas reconnu, laisse tel quel.
+function anneeScolaireeSuivante(txt){
+  const m = /^(\d{4})-(\d{4})$/.exec((txt||'').trim());
+  if(!m) return txt;
+  return `${parseInt(m[1])+1}-${parseInt(m[2])+1}`;
+}
+
+// Étape 2 : à utiliser UNE SEULE FOIS, une fois que TOUTES les classes ont été
+// traitées via "Valider le passage". Archive l'état complet de l'année, efface
+// les notes/présences pour repartir à zéro, retire les diplômés du Bac de la liste
+// active, et avance le libellé de l'année scolaire.
+function demarrerNouvelleAnneeScolaire(){
+  const confirmation = confirm(
+    `🆕 DÉMARRER UNE NOUVELLE ANNÉE SCOLAIRE\n\n`+
+    `Cette action :\n`+
+    `• Archive l'état complet de l'année actuelle (${eleves.length} élève(s), ${notes.length} note(s))\n`+
+    `• Efface les notes et présences pour repartir à zéro\n`+
+    `• Retire les élèves diplômés du Bac de la liste active\n`+
+    `• Passe l'année scolaire de "${anneeScolaire}" à "${anneeScolaireeSuivante(anneeScolaire)}"\n\n`+
+    `⚠️ Assure-toi d'avoir validé le passage de TOUTES les classes avant de continuer.\n\n`+
+    `Continuer ?`
+  );
+  if(!confirmation) return;
+
+  archiverAnnee();
+
+  const nbDiplomes = eleves.filter(e=>e.niveau==='diplome_bac').length;
+  eleves = eleves.filter(e=>e.niveau!=='diplome_bac');
+
+  const nbNotes = notes.length, nbPresences = presences.length;
+  notes = [];
+  presences = [];
+
+  const ancienneAnnee = anneeScolaire;
+  anneeScolaire = anneeScolaireeSuivante(anneeScolaire);
+
+  sauvegarder();
+  sauvegarderNotes();
+  sauvegarderPresences();
+  if(window.sauvegarderAnneeScolaire) window.sauvegarderAnneeScolaire();
+
+  journaliser('Nouvelle année scolaire démarrée', `${ancienneAnnee} → ${anneeScolaire} (${nbNotes} notes et ${nbPresences} présences archivées, ${nbDiplomes} diplômé(s) retiré(s))`);
+
+  renderPassage();
+  alert(`✅ Nouvelle année scolaire "${anneeScolaire}" prête !`);
 }
 
 // ========== ARCHIVES ==========
@@ -5107,6 +5697,12 @@ function chargerTarifs(){
   const inpDirecteur = document.getElementById('nom-directeur');
   if(inpDirecteur) inpDirecteur.value = nomDirecteur || '';
 
+  // Rappel automatique
+  const inpJourRappel = document.getElementById('jour-rappel-auto');
+  if(inpJourRappel) inpJourRappel.value = (parametresNotifications && parametresNotifications.jourRappel) || 5;
+  const inpRappelActif = document.getElementById('rappel-auto-actif');
+  if(inpRappelActif) inpRappelActif.checked = !!(parametresNotifications && parametresNotifications.actif);
+
   // Inscription
   const i12 = document.getElementById('inscription-cycle12');
   const ily = document.getElementById('inscription-lycee');
@@ -5132,6 +5728,15 @@ function sauvegarderTarifs(){
 
   const inpDirecteur = document.getElementById('nom-directeur');
   if(inpDirecteur) nomDirecteur = inpDirecteur.value.trim();
+
+  // Rappel automatique
+  const inpJourRappel = document.getElementById('jour-rappel-auto');
+  const inpRappelActif = document.getElementById('rappel-auto-actif');
+  parametresNotifications = {
+    jourRappel: inpJourRappel ? (parseInt(inpJourRappel.value) || 5) : 5,
+    actif: inpRappelActif ? inpRappelActif.checked : false
+  };
+  if(window.sauvegarderParametresNotifications) window.sauvegarderParametresNotifications();
 
   // Inscription
   const i12 = document.getElementById('inscription-cycle12');
