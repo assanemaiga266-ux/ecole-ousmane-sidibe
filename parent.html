@@ -127,7 +127,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD3mfTWWngbrXc4FyE8MNJvYF7YTEQ29EU",
@@ -138,16 +138,8 @@ const firebaseConfig = {
   appId: "1:311153375215:web:363ff448118e2fdd8ca81a"
 };
 const app = initializeApp(firebaseConfig);
-const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() }) });
-const ECOLE_ID = "ecole-ousmane-sidibe";
-
-async function charger(cle, defaut){
-  try{
-    const ref = doc(db, "ecoles", ECOLE_ID, "data", cle);
-    const snap = await getDoc(ref);
-    return snap.exists() ? snap.data().valeur : defaut;
-  }catch(e){ console.error(e); return defaut; }
-}
+const REGION = "europe-west1"; // même région que dans espaceParent.js
+const appelerEspaceParent = httpsCallable(getFunctions(app, REGION), "espaceParent");
 
 const nomNiveaux = {
   petit:'Petite section',moyen:'Moyenne section',grand:'Grande section',
@@ -167,18 +159,6 @@ const tousNiveaux = [...niveaux.m, ...niveaux.p, ...niveaux.s, ...niveaux.l];
 
 let eleves = [], presences = [], notes = [], compositions = [], tarifs = {}, anneeScolaire = '2025-2026', nomDirecteur = '';
 
-async function chargerToutesLesDonnees(){
-  eleves = await charger('eleves', []);
-  presences = await charger('presences', []);
-  notes = await charger('notes', []);
-  compositions = await charger('compositions', []);
-  tarifs = await charger('tarifs', {});
-  anneeScolaire = await charger('anneeScolaire', '2025-2026');
-  nomDirecteur = await charger('nomDirecteur', '');
-}
-// Chargement anticipé dès l'ouverture de la page pour une vérification rapide
-const chargementInitial = chargerToutesLesDonnees();
-
 window.verifierEleve = async function(){
   const matricule = document.getElementById('v-matricule').value.trim();
   const code = document.getElementById('v-code').value.trim();
@@ -190,22 +170,29 @@ window.verifierEleve = async function(){
     return;
   }
 
-  await chargementInitial; // s'assure que les données sont bien chargées
+  err.textContent = "⏳ Vérification...";
+  err.style.display = 'block';
 
-  const eleve = eleves.find(e =>
-    (e.matricule||'').trim() === matricule &&
-    (e.codeParent||'').trim() === code
-  );
-
-  if(!eleve){
-    err.textContent = "Matricule ou code incorrect. Vérifiez auprès de l'école.";
+  try{
+    const res = await appelerEspaceParent({ matricule, code });
+    const d = res.data;
+    eleves = [d.eleve, ...(d.camarades||[])];
+    presences = d.presences || [];
+    notes = d.notes || [];
+    compositions = d.compositions || [];
+    tarifs = d.tarifs || {};
+    anneeScolaire = d.anneeScolaire || anneeScolaire;
+    nomDirecteur = d.nomDirecteur || '';
+    err.style.display = 'none';
+    sessionStorage.setItem('eleve_verifie_id', d.eleve.id);
+    afficherEspaceEleve(d.eleve);
+  }catch(e){
+    console.error(e);
+    if(e.code === 'functions/resource-exhausted') err.textContent = e.message;
+    else if(e.code === 'functions/not-found') err.textContent = "Matricule ou code incorrect. Vérifiez auprès de l'école.";
+    else err.textContent = "Connexion impossible. Vérifiez votre réseau et réessayez.";
     err.style.display = 'block';
-    return;
   }
-
-  err.style.display = 'none';
-  sessionStorage.setItem('eleve_verifie_id', eleve.id);
-  afficherEspaceEleve(eleve);
 };
 
 function afficherEspaceEleve(e){
