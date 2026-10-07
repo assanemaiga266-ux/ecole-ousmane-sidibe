@@ -176,6 +176,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
 .edt-grid td{padding:6px 8px;border:1px solid var(--border);text-align:center;vertical-align:middle;min-width:88px}
 .edt-grid td.heure-col{background:var(--bg);font-weight:700;color:var(--muted);white-space:nowrap}
 .edt-case-matiere{font-weight:600;color:var(--text);font-size:11.5px}
+.edt-pause{background:#fff6dd;color:#8a6d1d;font-style:italic;font-weight:600}
+.aff-badge{display:inline-block;background:var(--green-light);color:var(--green);border:1px solid var(--border);border-radius:14px;padding:4px 10px;margin:0 6px 6px 0;font-size:12px;cursor:pointer}
 .edt-case-maitre{color:var(--muted);font-size:10.5px;margin-top:2px}
 .bulletin-section-title{font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px}
 .bulletin-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px}
@@ -435,22 +437,9 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
     <div class="form-row">
       <div class="field"><label>Salaire mensuel (FCFA)</label><input id="m-salaire" type="number" placeholder="75000"></div>
     </div>
-    <div class="sec-title" style="margin:10px 0 6px;font-size:12px">Matières enseignées</div>
-    <div class="form-row">
-      <div class="field"><label>Matière</label><input id="m-matiere-input" type="text" placeholder="Mathématiques"></div>
-      <div class="field"><label>Type</label>
-        <select id="m-matiere-type">
-          <option value="general">Lycée général</option>
-          <option value="pro">Professionnel</option>
-        </select>
-      </div>
-    </div>
-    <button type="button" class="btn btn-blue btn-full" style="margin-bottom:10px" onclick="ajouterMatiereMaitreTmp()">+ Ajouter cette matière à la liste</button>
-    <div id="m-matieres-liste" style="margin-bottom:12px"></div>
-    <div class="field field-full" style="margin-bottom:10px">
-      <label>Classe(s) où il enseigne (cocher une ou plusieurs — un maître peut enseigner dans plusieurs classes)</label>
-      <div id="m-classes-grid" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:7px;padding:10px;margin-top:4px"></div>
-    </div>
+    <div class="sec-title" style="margin:10px 0 6px;font-size:12px">Matières et classes</div>
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">Un maître peut enseigner des matières différentes selon la classe (ex : Français en 6ème, Anglais en 7ème). Ajoutez une ligne par matière et par classe.</div>
+    <div id="m-aff-zone"></div>
     <button class="btn btn-green btn-full" onclick="ajouterMaitre()">+ Ajouter le maître</button>
   </div>
 
@@ -1195,8 +1184,8 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
         <input class="coef-input" data-matiere="Anglais" data-cycle="college" type="number" placeholder="1" step="0.5" min="0.5" max="10" style="width:70px;text-align:center;padding:6px;border-radius:6px;border:1px solid var(--border);font-size:13px">
       </div>
       <div class="tarif-row">
-        <span class="tarif-label">Sciences Nat</span>
-        <input class="coef-input" data-matiere="Sciences Nat" data-cycle="college" type="number" placeholder="1" step="0.5" min="0.5" max="10" style="width:70px;text-align:center;padding:6px;border-radius:6px;border:1px solid var(--border);font-size:13px">
+        <span class="tarif-label">Bio</span>
+        <input class="coef-input" data-matiere="Bio" data-cycle="college" type="number" placeholder="1" step="0.5" min="0.5" max="10" style="width:70px;text-align:center;padding:6px;border-radius:6px;border:1px solid var(--border);font-size:13px">
       </div>
       <div class="tarif-row">
         <span class="tarif-label">Histoire-Géographie</span>
@@ -1629,15 +1618,20 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
           <option value="Samedi">Samedi</option>
         </select>
       </div>
-      <div class="field"><label>Matière</label><select id="edt-matiere"></select></div>
+      <div class="field"><label>Matière / créneau</label><select id="edt-matiere" onchange="majOptionsEdt()"></select></div>
     </div>
     <div class="form-row">
       <div class="field"><label>Heure de début</label><input type="time" id="edt-debut" value="08:00"></div>
       <div class="field"><label>Heure de fin</label><input type="time" id="edt-fin" value="09:00"></div>
     </div>
-    <div class="field" style="margin-bottom:12px">
+    <div class="field" id="edt-bloc-maitre" style="margin-bottom:12px">
       <label>Maître (optionnel)</label>
-      <select id="edt-maitre"><option value="">— Non assigné —</option></select>
+      <select id="edt-maitre" onchange="majInfoMaitreEdt()"><option value="">— Non assigné —</option></select>
+      <div id="edt-maitre-info" style="font-size:11.5px;color:var(--muted);margin-top:6px"></div>
+    </div>
+    <div id="edt-bloc-special" style="display:none;margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;cursor:pointer"><input type="checkbox" id="edt-tous-jours" style="width:16px;height:16px"> Tous les jours (Lundi → Samedi)</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;cursor:pointer"><input type="checkbox" id="edt-toutes-classes" style="width:16px;height:16px"> Toutes les classes</label>
     </div>
     <button class="btn btn-green btn-full" onclick="ajouterCoursEdt()">+ Ajouter au planning</button>
   </div>
@@ -1809,6 +1803,23 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-edit-maitre">
+  <div class="modal">
+    <div class="modal-title">✏️ Modifier le maître</div>
+    <div class="field" style="margin-bottom:10px"><label>Nom complet</label><input id="me-nom" type="text"></div>
+    <div class="form-row">
+      <div class="field"><label>Téléphone</label><input id="me-tel" type="tel"></div>
+      <div class="field"><label>Salaire mensuel (FCFA)</label><input id="me-salaire" type="number"></div>
+    </div>
+    <div class="sec-title" style="margin:10px 0 6px;font-size:12px">Matières et classes</div>
+    <div id="me-aff-zone"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" style="flex:1" onclick="fermerModifierMaitre()">Annuler</button>
+      <button class="btn btn-green" style="flex:1" onclick="enregistrerModifierMaitre()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL REÇU -->
 <div class="modal-overlay" id="modal-recu">
   <div class="modal" style="max-width:460px">
@@ -1943,6 +1954,25 @@ async function initialiserDonnees(){
   journalActivite = await chargerDepuisFirestore('journalActivite', []);
   parametresNotifications = await chargerDepuisFirestore('parametresNotifications', { jourRappel: 5, actif: false });
   etatNotifications = await chargerDepuisFirestore('etatNotifications', { derniereAlerte: null });
+
+  // Migration : l'ancienne matière « Sciences Nat » devient « Bio » (notes, coefficients, emploi du temps, cahier, devoirs, maîtres)
+  (function(){
+    const ch = {};
+    const ren = (arr,flag)=>{ (arr||[]).forEach(x=>{ if(x && x.matiere==='Sciences Nat'){ x.matiere='Bio'; ch[flag]=true; } }); };
+    ren(notes,'notes'); ren(compositions,'compositions'); ren(emploiDuTemps,'edt'); ren(cahierTexte,'cahier'); ren(devoirs,'devoirs');
+    if(tarifs && tarifs.coefficients && tarifs.coefficients['college|Sciences Nat']!==undefined){
+      if(tarifs.coefficients['college|Bio']===undefined) tarifs.coefficients['college|Bio'] = tarifs.coefficients['college|Sciences Nat'];
+      delete tarifs.coefficients['college|Sciences Nat']; ch.tarifs=true;
+    }
+    maitres.forEach(m=>{
+      (m.matieres||[]).forEach(x=>{ if(x.nom==='Sciences Nat'){ x.nom='Bio'; ch.maitres=true; } });
+      (m.affectations||[]).forEach(x=>{ if(x.matiere==='Sciences Nat'){ x.matiere='Bio'; ch.maitres=true; } });
+      if(m.matiere && m.matiere.indexOf('Sciences Nat')!==-1){ m.matiere = m.matiere.replace(/Sciences Nat/g,'Bio'); ch.maitres=true; }
+    });
+    const sv = (flag,fn)=>{ if(ch[flag] && window[fn]) window[fn](); };
+    sv('notes','sauvegarderNotes'); sv('compositions','sauvegarderCompositions'); sv('edt','sauvegarderEmploiDuTemps');
+    sv('cahier','sauvegarderCahierTexte'); sv('devoirs','sauvegarderDevoirs'); sv('tarifs','sauvegarderTarifsFirestore'); sv('maitres','sauvegarderMaitres');
+  })();
 
   // Migration : s'assurer que chaque élève a un historique
   eleves.forEach(e=>{ if(!e.historique) e.historique = []; });
@@ -2521,7 +2551,7 @@ Object.keys(niveaux).forEach(c=>{ niveaux[c].forEach(n=>{ cycleDuNiveau[n]=c; })
 // Matières par niveau
 const MATIERES = {
   _primaire: ['Français','Mathématiques','Anglais','Histoire-Géographie','Sciences (SVT)','Physique-Chimie','Éducation Civique et Morale','Éducation Physique et Sportive','Dictée-Question'],
-  _college:  ['Rédaction','Dictée-Question','Mathématiques','Physique-Chimie','Anglais','Sciences Nat','Histoire-Géographie','Éducation Civique et Morale','Éducation Physique','Musique','Dessin','Enseignement Ménager','Lecture','Récitation','Conduite'],
+  _college:  ['Rédaction','Dictée-Question','Mathématiques','Physique-Chimie','Anglais','Bio','Histoire-Géographie','Éducation Civique et Morale','Éducation Physique','Musique','Dessin','Enseignement Ménager','Lecture','Récitation','Conduite'],
   '10eme':   ['Mathématiques','Physique-Chimie','Sciences (SVT)','Anglais','Économie','Arts (Dramatique ou Musique)','Histoire-Géographie','Français'],
   '11sci':   ['Mathématiques','Physique-Chimie','Sciences (SVT)','Anglais','Éducation Civique et Morale','Éducation Physique et Sportive','Histoire-Géographie','Français'],
   '11let':   ['Mathématiques','Anglais','Philosophie','Arts (Dramatique ou Musique)','Éducation Civique et Morale','Éducation Physique et Sportive','Histoire','Géographie','Français'],
@@ -3259,67 +3289,181 @@ function renderClasses(){
 }
 
 // ========== MAÎTRES ==========
-function remplirGrilleClassesMaitre(){
-  const cont = document.getElementById('m-classes-grid');
-  if(!cont) return;
-  const cyclesLabels = {m:'Maternelle', p:'Premier cycle', s:'Second cycle', l:'Lycée'};
-  let html = '';
-  Object.keys(niveaux).forEach(c=>{
-    html += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin:8px 0 4px">${cyclesLabels[c]||c}</div>`;
-    niveaux[c].forEach(n=>{
-      html += `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer">
-        <input type="checkbox" class="m-classe-chk" value="${n}" style="width:16px;height:16px;flex-shrink:0">
-        ${nomNiveaux[n]}
-      </label>`;
-    });
-  });
-  cont.innerHTML = html;
+// Matières proposées pour une classe (on ajoute toujours « Français » s'il manque)
+function matieresPourClasse(niv){
+  const liste = [...getMatieresNiveau(niv)];
+  if(!liste.includes('Français')) liste.unshift('Français');
+  return liste;
 }
+
+// Affectations d'un maître : liste de {classe, matiere, type}.
+// Les anciens maîtres (matières + classes séparées) sont convertis à la volée.
+function getAffectationsMaitre(m){
+  if(Array.isArray(m.affectations)) return m.affectations;
+  const mats = (m.matieres && m.matieres.length)
+    ? m.matieres
+    : (m.matiere ? m.matiere.split(',').map(x=>({nom:x.trim(),type:'general'})).filter(x=>x.nom) : []);
+  const cls = m.classes || [];
+  const out = [];
+  mats.forEach(x=>{
+    if(cls.length) cls.forEach(c=>out.push({classe:c, matiere:x.nom, type:x.type||'general'}));
+    else out.push({classe:'', matiere:x.nom, type:x.type||'general'});
+  });
+  return out;
+}
+
+// Champs « anciens » dérivés des affectations (pour que le reste de l'appli continue de fonctionner)
+function champsDeriveMaitre(aff){
+  const matieres = [];
+  aff.forEach(a=>{ if(!matieres.some(x=>x.nom===a.matiere)) matieres.push({nom:a.matiere, type:a.type||'general'}); });
+  const classes = [...new Set(aff.map(a=>a.classe).filter(Boolean))];
+  return { matieres, matiere: matieres.map(x=>x.nom).join(', '), classes };
+}
+
+// « Français (6ème, 7ème) ; Anglais (8ème) »
+function resumeAffectationsMaitre(m){
+  const aff = getAffectationsMaitre(m);
+  if(!aff.length) return '';
+  const parMat = {};
+  aff.forEach(a=>{
+    const nomC = a.classe ? (nomNiveaux[a.classe]||a.classe) : 'classe non précisée';
+    (parMat[a.matiere] = parMat[a.matiere] || []).push(nomC);
+  });
+  return Object.keys(parMat).map(mat=>`${mat} (${parMat[mat].join(', ')})`).join(' ; ');
+}
+
+const affTmp = { m: [], me: [] };
+
+function construireZoneAffectation(p){
+  const zone = document.getElementById(p+'-aff-zone');
+  if(!zone) return;
+  if(!zone.innerHTML.trim()){
+    const cyclesLabels = {m:'Maternelle', p:'Premier cycle', s:'Second cycle', l:'Lycée'};
+    const optsClasses = Object.keys(niveaux).map(c=>
+      `<optgroup label="${cyclesLabels[c]||c}">` + niveaux[c].map(n=>`<option value="${n}">${nomNiveaux[n]}</option>`).join('') + `</optgroup>`
+    ).join('');
+    zone.innerHTML = `
+      <div class="form-row">
+        <div class="field"><label>Classe</label><select id="${p}-aff-classe" onchange="majMatieresAff('${p}')">${optsClasses}</select></div>
+        <div class="field"><label>Matière</label><select id="${p}-aff-matiere"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Autre matière (si absente de la liste)</label><input id="${p}-aff-autre" type="text" placeholder="Ex : Informatique"></div>
+        <div class="field"><label>Type</label>
+          <select id="${p}-aff-type"><option value="general">Lycée général</option><option value="pro">Professionnel</option></select>
+        </div>
+      </div>
+      <button type="button" class="btn btn-blue btn-full" style="margin-bottom:10px" onclick="ajouterAffectationTmp('${p}')">+ Ajouter cette matière dans cette classe</button>
+      <div id="${p}-aff-liste" style="margin-bottom:12px"></div>`;
+  }
+  majMatieresAff(p);
+  renderAffectationsTmp(p);
+}
+
+function majMatieresAff(p){
+  const cl = document.getElementById(p+'-aff-classe');
+  const sel = document.getElementById(p+'-aff-matiere');
+  if(!cl || !sel) return;
+  sel.innerHTML = matieresPourClasse(cl.value).map(x=>`<option>${x}</option>`).join('');
+}
+
+function ajouterAffectationTmp(p){
+  const classe = document.getElementById(p+'-aff-classe').value;
+  const autre = document.getElementById(p+'-aff-autre').value.trim();
+  const matiere = autre || document.getElementById(p+'-aff-matiere').value;
+  const type = document.getElementById(p+'-aff-type').value;
+  if(!classe || !matiere){ alert('Veuillez choisir une classe et une matière.'); return; }
+  if(affTmp[p].some(a=>a.classe===classe && a.matiere.toLowerCase()===matiere.toLowerCase())){
+    alert(`${matiere} est déjà ajoutée pour ${nomNiveaux[classe]||classe}.`); return;
+  }
+  affTmp[p].push({classe, matiere, type});
+  document.getElementById(p+'-aff-autre').value = '';
+  renderAffectationsTmp(p);
+}
+
+function retirerAffectationTmp(p, idx){
+  affTmp[p].splice(idx,1);
+  renderAffectationsTmp(p);
+}
+
+function renderAffectationsTmp(p){
+  const cont = document.getElementById(p+'-aff-liste');
+  if(!cont) return;
+  if(!affTmp[p].length){ cont.innerHTML = '<div style="font-size:12px;color:var(--muted)">Aucune matière ajoutée pour le moment.</div>'; return; }
+  cont.innerHTML = affTmp[p].map((a,i)=>
+    `<span class="aff-badge" onclick="retirerAffectationTmp('${p}',${i})">${a.matiere}${a.type==='pro'?' (Pro)':''} — ${a.classe?(nomNiveaux[a.classe]||a.classe):'classe non précisée'} ✕</span>`
+  ).join('');
+}
+
+// Ajoute automatiquement la ligne en cours de saisie si l'utilisateur a tapé une « autre matière » sans cliquer sur +
+function validerAffectationEnCours(p){
+  const autre = document.getElementById(p+'-aff-autre');
+  if(autre && autre.value.trim()) ajouterAffectationTmp(p);
+}
+
+function remplirGrilleClassesMaitre(){ construireZoneAffectation('m'); }
 
 function ajouterMaitre(){
   const nom = document.getElementById('m-nom').value.trim();
   const salaire = parseInt(document.getElementById('m-salaire').value) || 0;
   const tel = document.getElementById('m-tel').value.trim();
-  const classes = Array.from(document.querySelectorAll('.m-classe-chk:checked')).map(chk=>chk.value);
   if(!nom||!salaire){alert('Veuillez remplir au moins le nom et le salaire.');return;}
-  const matiereInputRestant = document.getElementById('m-matiere-input').value.trim();
-  if(matiereInputRestant) ajouterMatiereMaitreTmp();
-  const matieres_liste = [...matieresMaitreTmp];
-  const matiere = matieres_liste.map(m=>m.nom).join(', '); // rétrocompatibilité affichage
-  maitres.push({id:Date.now(),nom,matiere,matieres:matieres_liste,salaire,tel,classes,historiquePaiements:[]});
+  validerAffectationEnCours('m');
+  const affectations = affTmp.m.map(a=>({...a}));
+  maitres.push({id:Date.now(), nom, salaire, tel, affectations, ...champsDeriveMaitre(affectations), historiquePaiements:[]});
   sauvegarderMaitres();
   document.getElementById('m-nom').value='';
   document.getElementById('m-salaire').value='';
   document.getElementById('m-tel').value='';
-  matieresMaitreTmp = [];
-  renderMatieresMaitreTmp();
+  affTmp.m = [];
   renderMaitres();
   alert(`✅ ${nom} ajouté(e) !`);
 }
 
-let matieresMaitreTmp = [];
+// ----- Modification d'un maître -----
+let maitreEnEditionId = null;
 
-function ajouterMatiereMaitreTmp(){
-  const nom = document.getElementById('m-matiere-input').value.trim();
-  const type = document.getElementById('m-matiere-type').value;
-  if(!nom){ alert('Veuillez indiquer une matière.'); return; }
-  matieresMaitreTmp.push({nom, type});
-  document.getElementById('m-matiere-input').value='';
-  renderMatieresMaitreTmp();
+function ouvrirModifierMaitre(id){
+  const m = maitres.find(x=>x.id===id);
+  if(!m) return;
+  maitreEnEditionId = id;
+  document.getElementById('me-nom').value = m.nom || '';
+  document.getElementById('me-tel').value = m.tel || '';
+  document.getElementById('me-salaire').value = m.salaire || '';
+  affTmp.me = getAffectationsMaitre(m).map(a=>({...a}));
+  construireZoneAffectation('me');
+  document.getElementById('modal-edit-maitre').classList.add('open');
 }
 
-function retirerMatiereMaitreTmp(idx){
-  matieresMaitreTmp.splice(idx,1);
-  renderMatieresMaitreTmp();
+function fermerModifierMaitre(){
+  document.getElementById('modal-edit-maitre').classList.remove('open');
+  maitreEnEditionId = null;
 }
 
-function renderMatieresMaitreTmp(){
-  const cont = document.getElementById('m-matieres-liste');
-  if(!cont) return;
-  if(!matieresMaitreTmp.length){ cont.innerHTML=''; return; }
-  cont.innerHTML = matieresMaitreTmp.map((m,i)=>
-    `<span class="badge-pro" style="margin:0 6px 6px 0;cursor:pointer" onclick="retirerMatiereMaitreTmp(${i})">${m.nom} (${m.type==='pro'?'Pro':'Général'}) ✕</span>`
-  ).join('');
+function enregistrerModifierMaitre(){
+  const m = maitres.find(x=>x.id===maitreEnEditionId);
+  if(!m) return;
+  const nom = document.getElementById('me-nom').value.trim();
+  const salaire = parseInt(document.getElementById('me-salaire').value) || 0;
+  const tel = document.getElementById('me-tel').value.trim();
+  if(!nom||!salaire){ alert('Veuillez remplir au moins le nom et le salaire.'); return; }
+  validerAffectationEnCours('me');
+  const ancienNom = m.nom;
+  m.nom = nom; m.tel = tel; m.salaire = salaire;
+  m.affectations = affTmp.me.map(a=>({...a}));
+  Object.assign(m, champsDeriveMaitre(m.affectations));
+  // Si le nom change, on met aussi à jour le cahier de textes et les devoirs qui mentionnent ce maître
+  if(ancienNom !== nom){
+    let c1=false, c2=false;
+    cahierTexte.forEach(c=>{ if(c.maitreNom===ancienNom){ c.maitreNom=nom; c1=true; } });
+    devoirs.forEach(d=>{ if(d.maitreNom===ancienNom){ d.maitreNom=nom; c2=true; } });
+    if(c1) sauvegarderCahierTexte();
+    if(c2) sauvegarderDevoirs();
+  }
+  sauvegarderMaitres();
+  fermerModifierMaitre();
+  renderMaitres();
+  alert(`✅ ${nom} modifié(e) !`);
 }
 
 // Vérifie si un maître a déjà été payé pour un mois/année donnés (par défaut : le mois en cours)
@@ -3369,10 +3513,13 @@ function renderMaitres(){
       : 'Aucun paiement';
     const payeCeMois = maitrePayePourMois(m, moisCourant, anneeCourante);
     const mois6 = statutSalaireMois(m);
-    const classesLabel = (m.classes && m.classes.length) ? m.classes.map(n=>nomNiveaux[n]||n).join(', ') : 'Aucune classe assignée';
-    const matieresAffichage = (m.matieres && m.matieres.length)
-      ? m.matieres.map(x=>`${x.nom}${x.type==='pro'?' (Pro)':''}`).join(', ')
-      : (m.matiere || '—');
+    const affs = getAffectationsMaitre(m);
+    const classesUniques = [...new Set(affs.map(a=>a.classe).filter(Boolean))];
+    const classesLabel = classesUniques.length ? classesUniques.map(n=>nomNiveaux[n]||n).join(', ') : 'Aucune classe assignée';
+    const matieresAffichage = resumeAffectationsMaitre(m) || '—';
+    const detailAff = affs.length
+      ? affs.map(a=>`${a.matiere}${a.type==='pro'?' (Pro)':''} — ${a.classe?(nomNiveaux[a.classe]||a.classe):'classe non précisée'}`).join('<br>')
+      : '—';
     return `
     <div class="eleve-card">
       <div class="eleve-header" onclick="toggleMaitre(${m.id})">
@@ -3384,10 +3531,9 @@ function renderMaitres(){
         <span class="badge ${payeCeMois?'badge-ok':'badge-zero'}">${payeCeMois?'✅ Payé ce mois':'❌ Non payé ce mois'}</span>
       </div>
       <div class="eleve-body" id="body-m-${m.id}">
-        <div class="pay-row"><span class="pay-label">Matière(s)</span><span class="pay-val">${matieresAffichage}</span></div>
+        <div class="pay-row"><span class="pay-label">Matières par classe</span><span class="pay-val" style="text-align:right">${detailAff}</span></div>
         <div class="pay-row"><span class="pay-label">Salaire mensuel</span><span class="pay-val">${m.salaire.toLocaleString()} FCFA</span></div>
-        <div class="pay-row"><span class="pay-label">Classe(s)</span><span class="pay-val">${classesLabel}</span></div>
-        <div class="pay-row"><span class="pay-label">Téléphone</span><span class="pay-val">${m.tel||'—'}</span></div>
+                <div class="pay-row"><span class="pay-label">Téléphone</span><span class="pay-val">${m.tel||'—'}</span></div>
         <div class="pay-row"><span class="pay-label">Dernier paiement</span><span class="pay-val">${dernierPaiement}</span></div>
         <div class="sec-title" style="margin:10px 0 4px;font-size:11px">Statut des 6 derniers mois</div>
         <div class="tranche-list">
@@ -3396,6 +3542,7 @@ function renderMaitres(){
         ${(m.historiquePaiements&&m.historiquePaiements.length)?'<div class="sec-title" style="margin:10px 0 4px;font-size:11px">Historique complet</div><div class="histo-list">'+m.historiquePaiements.map(h=>`<div class="histo-item"><span class="histo-date">${h.date}</span><span class="histo-montant">${h.montant.toLocaleString()} FCFA</span></div>`).join('')+'</div>':''}
         <div class="actions-eleve">
           <button class="btn btn-blue" style="flex:1;font-size:12px" onclick="ouvrirModalMaitre(${m.id})">💰 Verser le salaire</button>
+          <button class="btn btn-gray" style="font-size:12px" onclick="ouvrirModifierMaitre(${m.id})">✏️ Modifier</button>
           <button class="btn btn-red" style="font-size:12px" onclick="supprimerMaitre(${m.id})">🗑</button>
         </div>
       </div>
@@ -5397,14 +5544,58 @@ function updateNivSelectEdt(){
   majMatiereEdt();
 }
 
+const CRENEAUX_SPECIAUX = ['Récréation','Pause de midi','Après-midi'];
+const ICONES_CRENEAUX = {'Récréation':'🎈','Pause de midi':'🍽️','Après-midi':'🌤️'};
+function estCreneauSpecial(m){ return CRENEAUX_SPECIAUX.includes(m); }
+function libelleCreneauEdt(m){ return estCreneauSpecial(m) ? (ICONES_CRENEAUX[m]||'')+' '+m : m; }
+
 function majMatiereEdt(){
   const niv = document.getElementById('edt-niveau').value;
-  mettreAJourSelectMatiere('edt-matiere', niv, false);
+  const sel = document.getElementById('edt-matiere');
+  const precedente = sel.value;
+  const matieres = matieresPourClasse(niv);
+  sel.innerHTML = '<optgroup label="Cours">' + matieres.map(m=>`<option>${m}</option>`).join('') + '</optgroup>'
+    + '<optgroup label="Autres créneaux">' + CRENEAUX_SPECIAUX.map(m=>`<option value="${m}">${libelleCreneauEdt(m)}</option>`).join('') + '</optgroup>';
+  if(precedente && [...matieres, ...CRENEAUX_SPECIAUX].includes(precedente)) sel.value = precedente;
+  majOptionsEdt();
+}
+
+// Affiche/masque le choix du maître selon qu'il s'agit d'un cours ou d'un créneau spécial (récréation, etc.)
+function majOptionsEdt(){
+  const special = estCreneauSpecial(document.getElementById('edt-matiere').value);
+  document.getElementById('edt-bloc-maitre').style.display = special ? 'none' : '';
+  document.getElementById('edt-bloc-special').style.display = special ? '' : 'none';
+  peuplerSelectMaitresEdt();
 }
 
 function peuplerSelectMaitresEdt(){
   const sel = document.getElementById('edt-maitre');
-  sel.innerHTML = '<option value="">— Non assigné —</option>' + maitres.map(m=>`<option value="${m.id}">${m.nom}</option>`).join('');
+  if(!sel) return;
+  const precedent = sel.value;
+  const niveau = (document.getElementById('edt-niveau')||{}).value;
+  const matiere = (document.getElementById('edt-matiere')||{}).value;
+  const correspond = m => getAffectationsMaitre(m).some(a=>a.classe===niveau && a.matiere===matiere);
+  const adaptes = maitres.filter(correspond);
+  const autres = maitres.filter(m=>!correspond(m));
+  const opt = m => { const r = resumeAffectationsMaitre(m); return `<option value="${m.id}">${m.nom}${r?' — '+r:''}</option>`; };
+  let html = '<option value="">— Non assigné —</option>';
+  if(adaptes.length) html += '<optgroup label="✅ Enseigne cette matière dans cette classe">' + adaptes.map(opt).join('') + '</optgroup>';
+  if(autres.length) html += '<optgroup label="' + (adaptes.length?'Autres maîtres':'Maîtres') + '">' + autres.map(opt).join('') + '</optgroup>';
+  sel.innerHTML = html;
+  const existe = precedent && maitres.some(m=>String(m.id)===precedent);
+  if(existe && (adaptes.some(m=>String(m.id)===precedent) || !adaptes.length)) sel.value = precedent;
+  else if(adaptes.length===1) sel.value = String(adaptes[0].id);
+  majInfoMaitreEdt();
+}
+
+// Sous le choix du maître : toutes ses matières et ses classes
+function majInfoMaitreEdt(){
+  const info = document.getElementById('edt-maitre-info');
+  if(!info) return;
+  const m = maitres.find(x=>String(x.id)===document.getElementById('edt-maitre').value);
+  if(!m){ info.innerHTML = ''; return; }
+  const r = resumeAffectationsMaitre(m);
+  info.innerHTML = `🧑‍🏫 <b>${m.nom}</b> enseigne : ${r || 'aucune matière renseignée'}`;
 }
 
 function peuplerSelectVueNiveauEdt(){
@@ -5428,12 +5619,41 @@ function ajouterCoursEdt(){
   const matiere = document.getElementById('edt-matiere').value;
   const debut = document.getElementById('edt-debut').value;
   const fin = document.getElementById('edt-fin').value;
-  const maitreId = document.getElementById('edt-maitre').value;
+  const special = estCreneauSpecial(matiere);
+  const maitreId = special ? '' : document.getElementById('edt-maitre').value;
   if(!debut || !fin){ alert("Veuillez renseigner l'heure de début et de fin."); return; }
   if(fin<=debut){ alert("L'heure de fin doit être après l'heure de début."); return; }
 
+  const JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const tousNiveaux = [...niveaux.m, ...niveaux.p, ...niveaux.s, ...niveaux.l];
+  const chevauche = (nv,j)=>emploiDuTemps.find(c=>c.niveau===nv && c.jour===j && !(fin<=c.debut || debut>=c.fin));
+
+  // ----- Créneau spécial (récréation, pause de midi, après-midi) : pas de maître, applicable à plusieurs jours / classes -----
+  if(special){
+    const tousJours = document.getElementById('edt-tous-jours').checked;
+    const toutesClasses = document.getElementById('edt-toutes-classes').checked;
+    const jours = tousJours ? JOURS : [jour];
+    const cibles = toutesClasses ? tousNiveaux : [niveau];
+    const unique = jours.length===1 && cibles.length===1;
+    if(unique){
+      const conflit = chevauche(niveau, jour);
+      if(conflit && !confirm(`⚠️ Ce créneau chevauche un cours déjà programmé (${conflit.matiere}, ${conflit.debut}-${conflit.fin}) pour cette classe le ${jour}. Continuer quand même ?`)) return;
+    }
+    let nb = 0, ignores = 0;
+    cibles.forEach(nv=>jours.forEach(j=>{
+      if(!unique && chevauche(nv,j)){ ignores++; return; }
+      emploiDuTemps.push({ id: Date.now()+nb, niveau:nv, jour:j, matiere, debut, fin, maitreId:'', special:true });
+      nb++;
+    }));
+    sauvegarderEmploiDuTemps();
+    document.getElementById('edt-vue-niveau').value = niveau;
+    renderPlanningClasse();
+    alert(`✅ ${matiere} ajouté(e) : ${nb} créneau(x), ${debut}-${fin}` + (ignores?`\n(${ignores} ignoré(s) car ils chevauchaient un cours existant)`:''));
+    return;
+  }
+
   // Vérification de conflit : même classe, même jour, créneaux qui se chevauchent
-  const conflit = emploiDuTemps.find(c=>c.niveau===niveau && c.jour===jour && !(fin<=c.debut || debut>=c.fin));
+  const conflit = chevauche(niveau, jour);
   if(conflit){
     if(!confirm(`⚠️ Ce créneau chevauche un cours déjà programmé (${conflit.matiere}, ${conflit.debut}-${conflit.fin}) pour cette classe le ${jour}. Continuer quand même ?`)) return;
   }
@@ -5495,6 +5715,7 @@ function renderPlanningClasse(){
       jours.forEach(jour=>{
         const c = cours.find(x=>x.jour===jour && x.debut===cr.debut && x.fin===cr.fin);
         if(!c){ html += `<td>—</td>`; return; }
+        if(estCreneauSpecial(c.matiere)){ html += `<td class="edt-pause" style="background:#fff6dd;color:#8a6d1d;font-style:italic;font-weight:600">${libelleCreneauEdt(c.matiere)}</td>`; return; }
         const nomM = c.maitreId ? (maitres.find(m=>m.id===parseInt(c.maitreId))?.nom || '') : '';
         html += `<td><div class="edt-case-matiere">${c.matiere}</div>${avecMaitre?`<div class="edt-case-maitre">${nomM||'Non assigné'}</div>`:''}</td>`;
       });
@@ -5516,7 +5737,7 @@ function renderPlanningClasse(){
         const nomM = c.maitreId ? (maitres.find(m=>m.id===parseInt(c.maitreId))?.nom || '') : '';
         return `<div class="eleve-card">
           <div class="eleve-header">
-            <div><div class="eleve-nom">${c.debut} – ${c.fin}</div><div class="eleve-niveau">${c.matiere}${nomM?' • '+nomM:''}</div></div>
+            <div><div class="eleve-nom">${c.debut} – ${c.fin}</div><div class="eleve-niveau">${libelleCreneauEdt(c.matiere)}${nomM?' • '+nomM:''}</div></div>
             <button class="btn btn-gray" style="padding:6px 10px;font-size:11px" onclick="supprimerCoursEdt(${c.id})">✕</button>
           </div>
         </div>`;
