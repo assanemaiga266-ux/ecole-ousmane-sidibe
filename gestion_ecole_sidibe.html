@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -1879,7 +1878,13 @@ async function sauvegarderDansFirestore(cle, valeur){
   try {
     const docRef = doc(db, "ecoles", ECOLE_ID, "data", cle);
     await setDoc(docRef, { valeur });
-  } catch(e){ console.error("Erreur sauvegarde", cle, e); }
+  } catch(e){
+    console.error("Erreur sauvegarde", cle, e);
+    // Avant, l'erreur était silencieuse : la personne croyait avoir enregistré alors que non.
+    if(e && e.code === 'permission-denied'){
+      alert("⚠️ Enregistrement refusé : votre rôle n'a pas le droit de modifier « " + cle + " ». Rien n'a été sauvegardé.");
+    }
+  }
 }
 
 // Les photos sont stockées UNE PAR DOCUMENT (sous-collection "photos"),
@@ -2061,7 +2066,11 @@ onAuthStateChanged(auth, async (user)=>{
     try{
       const profil = await chargerProfilUtilisateur(user.uid);
       ECOLE_ID = profil.ecoleId;
-      USER_ROLE = profil.role || 'admin';
+      // Pas de rôle par défaut « admin » : un profil sans rôle valide est refusé (principe du moindre privilège).
+      if(!['admin','gestionnaire','prof','comptable'].includes(profil.role)){
+        throw new Error("Votre compte n'a pas de rôle valide. Contactez l'administrateur.");
+      }
+      USER_ROLE = profil.role;
       USER_NOM = profil.nom || user.email || 'Utilisateur';
       document.getElementById('login-screen').style.display='none';
       cacherOngletsRestreints();
