@@ -220,6 +220,26 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
   .recu{border:none;margin:0}
 }
 </style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<style>
+/* ===== Page d'accueil en tuiles (préfixe ac-) ===== */
+.ac-wrap{position:relative;overflow:hidden;border-radius:16px;padding:22px 16px 28px;min-height:60vh;background:linear-gradient(160deg,#E6EDF8,#F8FAFC 60%);font-family:Roboto,"Segoe UI",system-ui,sans-serif}
+.ac-bg{position:absolute;top:0;right:0;bottom:0;left:0;background-position:50% 150px;background-size:min(640px,115%) auto;background-repeat:no-repeat;filter:blur(4px);opacity:.32;pointer-events:none}
+.ac-content{position:relative}
+.ac-hello{margin:0 0 4px;font-size:26px;font-weight:700;color:#0B1F47}
+.ac-sub{margin:0 0 20px;font-size:15px;color:#475569}
+.ac-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.ac-t{background:rgba(255,255,255,.94);border-radius:18px;overflow:hidden;box-shadow:0 2px 6px rgba(15,23,42,.1),0 12px 28px rgba(15,23,42,.08);display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+.ac-t:hover{transform:translateY(-4px);box-shadow:0 4px 10px rgba(15,23,42,.12),0 18px 36px rgba(15,23,42,.14)}
+.ac-h{padding:15px 18px;color:#fff;font-weight:700;font-size:17px;letter-spacing:.3px;display:flex;align-items:center;gap:12px}
+.ac-i{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:16px}
+.ac-b{padding:16px 18px 18px;display:flex;flex-direction:column;gap:12px}
+.ac-n{font-size:28px;font-weight:700;letter-spacing:-.5px;color:#0F172A}
+.ac-l{font-size:13px;color:#475569;margin-top:-8px}
+.ac-a{display:flex;flex-wrap:wrap;gap:8px}
+.ac-a button{font-family:inherit;font-size:13px;font-weight:500;color:#0F2A5C;background:#E8EEF7;border:none;padding:12px 14px;border-radius:999px;cursor:pointer}
+.ac-a button:hover{background:#0F2A5C;color:#fff}
+</style>
 </head>
 <body>
 
@@ -257,7 +277,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
 </div>
 
 <div class="tabs">
-  <div class="tab active" data-tab="tableau" onclick="showTab('tableau')">📊 Tableau</div>
+  <div class="tab active" data-tab="accueil" onclick="showTab('accueil')">🏠 Accueil</div>
+  <div class="tab" data-tab="tableau" onclick="showTab('tableau')">📊 Tableau</div>
   <div class="tab" data-tab="eleves" onclick="showTab('eleves')">👤 Élèves</div>
   <div class="tab" data-tab="classes" onclick="showTab('classes')">🏫 Classes</div>
   <div class="tab" data-tab="maitres" onclick="showTab('maitres')">🧑‍🏫 Maîtres</div>
@@ -280,7 +301,18 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
 </div>
 
 <!-- PAGE TABLEAU DE BORD -->
-<div class="page active" id="page-tableau">
+<div class="page active" id="page-accueil">
+  <div class="ac-wrap">
+    <div class="ac-bg" id="ac-bg" aria-hidden="true"></div>
+    <div class="ac-content">
+      <h1 class="ac-hello" id="ac-hello">Bonjour</h1>
+      <p class="ac-sub">Que souhaitez-vous faire aujourd’hui ?</p>
+      <div class="ac-grid" id="ac-grid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-tableau">
   <div id="banner-rappel-auto"></div>
   <div class="stats-grid">
     <div class="stat-card blue"><div class="label">Total élèves</div><div class="value" id="stat-total">0</div></div>
@@ -678,10 +710,6 @@ Diakité	Fatoumata	2012	1317	65987654	50000" style="font-size:13px;padding:9px 1
           <option>Dictée-Question</option>
         </select>
       </div>
-    </div>
-    <div class="field field-full" style="margin-bottom:10px">
-      <label>Type de devoir (libre, ex: Devoir surveillé, Interrogation...)</label>
-      <input type="text" id="n-type" placeholder="Ex: Devoir de classe">
     </div>
     <div class="field field-full" style="margin-bottom:10px">
       <label>Note du devoir (sur 20)</label>
@@ -2012,13 +2040,13 @@ window.sauvegarderEtatNotifications = () => sauvegarderDansFirestore('etatNotifi
 
 // Cache selon le rôle : onglets invisibles pour certains rôles.
 // "admin" voit tout. Ajuster ces listes selon les besoins de chaque école.
-const TOUS_LES_ONGLETS = ['tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe','statistiques','retards','journal'];
+const TOUS_LES_ONGLETS = ['accueil','tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe','statistiques','retards','journal'];
 
 // On définit ce que CHAQUE rôle a le droit de voir, puis on déduit
 // automatiquement la liste des onglets à cacher pour ce rôle.
 const ONGLETS_AUTORISES = {
-  prof: ['classes','presence','cahier','devoirs','notes','bulletins','edt'],
-  comptable: ['tableau','tarifs','livre','recus','retards'],
+  prof: ['accueil','classes','presence','cahier','devoirs','notes','bulletins','edt'],
+  comptable: ['accueil','tableau','tarifs','livre','recus','retards'],
   gestionnaire: TOUS_LES_ONGLETS.filter(o => o !== 'equipe')
   // admin : pas dans cette liste = accès à tout, y compris Équipe
 };
@@ -2042,6 +2070,7 @@ function cacherOngletsRestreints(){
 // le premier onglet auquel il a accès à la place d'un écran vide.
 // À appeler APRÈS le chargement des données (sinon la page ciblée est vide).
 function redirigerVersOngletParDefaut(){
+  if(typeof renderAccueil==='function') renderAccueil();
   if(!USER_ROLE || USER_ROLE === 'admin') return;
   const caches = ONGLETS_RESTREINTS[USER_ROLE] || [];
   if(caches.includes('tableau')){
@@ -2729,12 +2758,79 @@ let recherchePresenceActive = '';
 let rechercheCahierActive = '';
 
 // ========== TABS ==========
+// ========== PAGE D'ACCUEIL ==========
+function ongletVisible(tab){
+  const el = document.querySelector('.tab[data-tab="'+tab+'"]');
+  return !!el && el.style.display !== 'none';
+}
+
+const ACCUEIL_TUILES = [
+  { titre:'Élèves', ini:'É', c1:'#1D4ED8', c2:'#1E3A8A',
+    chiffre:()=>String(eleves.length), label:'élèves inscrits',
+    actions:[['Inscriptions','eleves'],['Classes','classes'],['Présence','presence']] },
+  { titre:'Notes', ini:'N', c1:'#15803D', c2:'#14532D',
+    chiffre:()=>'T1 · T2 · T3', label:'trimestres',
+    actions:[['Saisie','notes'],['Bulletins','bulletins'],['Passage','passage']] },
+  { titre:'Caisse', ini:'C', c1:'#B45309', c2:'#78350F',
+    chiffre:()=>{
+      const jour = new Date().toISOString().split('T')[0];
+      const ops = livreCompte.filter(o=>o.dateTri===jour);
+      const rec = ops.filter(o=>o.type==='recette').reduce((s,o)=>s+o.montant,0);
+      const dep = ops.filter(o=>o.type==='depense').reduce((s,o)=>s+o.montant,0);
+      return (soldeOuvertureDuJour()+rec-dep).toLocaleString('fr-FR')+' FCFA';
+    }, label:'solde de caisse du jour',
+    actions:[['Livre de compte','livre'],['Reçus','recus'],['Tarifs','tarifs']] },
+  { titre:'Enseignants', ini:'E', c1:'#BE123C', c2:'#881337',
+    chiffre:()=>String(maitres.length), label:'maîtres',
+    actions:[['Classes et matières','maitres'],['Cahier de textes','cahier'],['Devoirs','devoirs']] },
+  { titre:'Emploi du temps', ini:'P', c1:'#0F766E', c2:'#134E4A',
+    chiffre:()=>'Semaine', label:'planning des classes',
+    actions:[['Planning','edt'],['Calendrier','calendrier']] },
+  { titre:'Impressions', ini:'I', c1:'#6D28D9', c2:'#4C1D95',
+    chiffre:()=>String(eleves.filter(e=>e.niveau==='9eme').length), label:'cartes scolaires (9ème)',
+    actions:[['Cartes','eleves'],['Bulletins','bulletins'],['Reçus','recus']] },
+  { titre:'Statistiques', ini:'S', c1:'#0369A1', c2:'#0C4A6E',
+    chiffre:()=>'Tableau de bord', label:'suivi de l’école',
+    actions:[['Tableau','tableau'],['Statistiques','statistiques'],['Retards','retards']] },
+  { titre:'Administration', ini:'A', c1:'#475569', c2:'#1E293B',
+    chiffre:()=>'Gestion', label:'équipe et historique',
+    actions:[['Équipe','equipe'],['Archives','archives'],['Journal','journal']] }
+];
+
+function renderAccueil(){
+  const grid = document.getElementById('ac-grid');
+  if(!grid) return;
+  const hello = document.getElementById('ac-hello');
+  if(hello){
+    const nom = (typeof USER_NOM !== 'undefined' && USER_NOM && USER_NOM.indexOf('@')===-1) ? USER_NOM : '';
+    hello.textContent = nom ? 'Bonjour, '+nom : 'Bonjour';
+  }
+  // Logo de l'école en fond, flou : on réutilise celui de l'en-tête
+  const logo = document.querySelector('.header-left img');
+  const bg = document.getElementById('ac-bg');
+  if(logo && bg && !bg.style.backgroundImage) bg.style.backgroundImage = 'url("'+logo.src+'")';
+
+  grid.innerHTML = ACCUEIL_TUILES.map(t=>{
+    const actions = t.actions.filter(a=>ongletVisible(a[1]));
+    if(!actions.length) return '';
+    return `<section class="ac-t">
+      <div class="ac-h" style="background:linear-gradient(135deg,${t.c1},${t.c2})"><span class="ac-i">${t.ini}</span>${t.titre}</div>
+      <div class="ac-b">
+        <div class="ac-n">${t.chiffre()}</div>
+        <div class="ac-l">${t.label}</div>
+        <div class="ac-a">${actions.map(a=>`<button type="button" onclick="showTab('${a[1]}')">${a[0]}</button>`).join('')}</div>
+      </div>
+    </section>`;
+  }).join('');
+}
+
 function showTab(t){
   document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-  const idx = ['tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe','statistiques','retards','journal'].indexOf(t);
+  const idx = ['accueil','tableau','eleves','classes','maitres','presence','cahier','devoirs','notes','bulletins','tarifs','passage','recus','livre','archives','edt','calendrier','equipe','statistiques','retards','journal'].indexOf(t);
   document.querySelectorAll('.tab')[idx].classList.add('active');
   document.getElementById('page-'+t).classList.add('active');
+  if(t==='accueil') renderAccueil();
   if(t==='tableau') renderTableau();
   if(t==='eleves') renderEleves();
   if(t==='classes') renderClasses();
@@ -3348,7 +3444,7 @@ function construireZoneAffectation(p){
   if(!zone) return;
   if(!zone.innerHTML.trim()){
     const cyclesLabels = {m:'Maternelle', p:'Premier cycle', s:'Second cycle', l:'Lycée'};
-    const optsClasses = Object.keys(niveaux).map(c=>
+    const optsClasses = Object.keys(niveaux).filter(c=>c!=='l').map(c=>
       `<optgroup label="${cyclesLabels[c]||c}">` + niveaux[c].map(n=>`<option value="${n}">${nomNiveaux[n]}</option>`).join('') + `</optgroup>`
     ).join('');
     zone.innerHTML = `
@@ -3358,9 +3454,6 @@ function construireZoneAffectation(p){
       </div>
       <div class="form-row">
         <div class="field"><label>Autre matière (si absente de la liste)</label><input id="${p}-aff-autre" type="text" placeholder="Ex : Informatique"></div>
-        <div class="field"><label>Type</label>
-          <select id="${p}-aff-type"><option value="general">Lycée général</option><option value="pro">Professionnel</option></select>
-        </div>
       </div>
       <button type="button" class="btn btn-blue btn-full" style="margin-bottom:10px" onclick="ajouterAffectationTmp('${p}')">+ Ajouter cette matière dans cette classe</button>
       <div id="${p}-aff-liste" style="margin-bottom:12px"></div>`;
@@ -3380,7 +3473,7 @@ function ajouterAffectationTmp(p){
   const classe = document.getElementById(p+'-aff-classe').value;
   const autre = document.getElementById(p+'-aff-autre').value.trim();
   const matiere = autre || document.getElementById(p+'-aff-matiere').value;
-  const type = document.getElementById(p+'-aff-type').value;
+  const type = 'general';
   if(!classe || !matiere){ alert('Veuillez choisir une classe et une matière.'); return; }
   if(affTmp[p].some(a=>a.classe===classe && a.matiere.toLowerCase()===matiere.toLowerCase())){
     alert(`${matiere} est déjà ajoutée pour ${nomNiveaux[classe]||classe}.`); return;
@@ -4341,14 +4434,13 @@ function ajouterNote(){
   if(!eleveId){ alert('Veuillez d\'abord ajouter un élève dans l\'onglet Élèves.'); return; }
   const trimestre = document.getElementById('n-trimestre').value;
   const matiere = document.getElementById('n-matiere').value;
-  const type = document.getElementById('n-type').value.trim() || 'Devoir';
+  const type = 'Note de classe';
   const note = parseFloat(document.getElementById('n-note').value);
   if(isNaN(note) || note<0 || note>20){ alert('Note invalide (doit être entre 0 et 20).'); return; }
 
   // Chaque devoir est ajouté individuellement (pas de remplacement) pour permettre plusieurs devoirs par matière/trimestre
   notes.push({id:Date.now(), eleveId, trimestre, matiere, type, note});
   sauvegarderNotes();
-  document.getElementById('n-type').value='';
   document.getElementById('n-note').value='';
   renderNotes();
   const e = eleves.find(x=>x.id===eleveId);
